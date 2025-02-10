@@ -14,27 +14,24 @@ const socket: Socket = io("http://localhost:3000", {
   transports: ["websocket"], // Ensure WebSocket is used
 });
 import { v4 as uuidv4 } from "uuid";
-const Teacher_live_table = ({ liveAttendance }: any) => {
-  console.log(liveAttendance);
+const Teacher_live_table = () => {
+  
   const [liveattendance, setliveattendance] = useState([]);
-  useEffect(() => {
-    setliveattendance(liveAttendance);
-  }, [liveAttendance]);
+  
   const [track, settrack] = useState(false);
   useEffect(() => {}, []);
   return (
     <>
       <Table>
-        <TableCaption>A list of your</TableCaption>
+        
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">Session Name</TableHead>
             <TableHead>Enrollment</TableHead>
+            <TableHead>Student Id</TableHead>
+            <TableHead>Student Name</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>IP</TableHead>
-            <TableHead>distance</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Image</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -45,13 +42,7 @@ const Teacher_live_table = ({ liveAttendance }: any) => {
                   {attendance.student_name}
                 </TableCell>
                 <TableCell>{attendance.student_enroll}</TableCell>
-                <TableCell>{attendance.date}</TableCell>
-                <TableCell>{attendance.IP}</TableCell>
-                <TableCell
-                  className={`${attendance.distance < 50 ? "text-green-500" : "text-red-600"}`}
-                >
-                  {attendance.distance}
-                </TableCell>
+                
                 <TableCell>{attendance.status}</TableCell>
                 <TableCell className="text-right">
                   <img src={attendance.image} alt="session" width={200} />

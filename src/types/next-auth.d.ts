@@ -10,10 +10,9 @@ declare module "next-auth" {
     formfilled?: boolean;
     image?: string;
     email?: string;
-    session_id?: string;
-    qemail?: string;
     studentid?: string; 
     teacherid?: string;
+    hodid?: string;
   }
   interface Session {
     user: {
@@ -24,10 +23,9 @@ declare module "next-auth" {
       userName?: string;
       usertype?: string;
       email?: string; 
-      session_id?: string;
-      qemail?: string;
       studentid?: string;
       teacherid?: string;
+      hodid?: string;
     } & DefaultSession["user"];
   }
 }
@@ -41,9 +39,8 @@ declare module "next-auth/jwt" {
     userName?: string;
     usertype?: string;
     email?: string;
-    session_id?: string;
-    qemail?: string; 
     studentid?: string; 
     teacherid?: string;
+    hodid?: string;
   }
 }

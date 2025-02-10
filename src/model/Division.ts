@@ -7,8 +7,10 @@ export interface Division extends Document{
     time_table:Array<mongoose.Schema.Types.ObjectId>;
     timestamp:Date;
     batchs:Array<mongoose.Schema.Types.ObjectId>;
+    hodid:mongoose.Schema.Types.ObjectId;
     attendance:Array<mongoose.Schema.Types.ObjectId>;
     students:Array<mongoose.Schema.Types.ObjectId>;
+    department:mongoose.Schema.Types.ObjectId; 
 }
 
 export interface Batch extends Document{
@@ -99,7 +101,18 @@ const DivisionSchema:Schema<Division>=new Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"Student",
         default:null
-    }]
+    }],
+    department:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Department",
+        default:null
+    },
+    hodid:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Hod",
+        default:null
+    }
+
 })
 
 const DivisionAttendanceSchema:Schema<DivisionAttendance>=new Schema({

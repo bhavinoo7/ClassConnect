@@ -116,7 +116,7 @@ export function AnimatedModalDemo({ data, data1, email, teacherid }: any) {
                 </div>
               </div>
               <div>
-                <Teacher_live_table liveAttendance={liveAttendance} />
+                <Teacher_live_table />
               </div>
             </div>
           </ModalContent>

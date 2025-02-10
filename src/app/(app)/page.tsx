@@ -4,7 +4,6 @@ import { BackgroundBeamsWithCollision } from "@/components/background-beams-with
 export default function page() {
   return (
    <>
-   
    <Navbar/>
    <div className="flex items-center justify-center bg-gray-200 text-5xl">
    <BackgroundBeamsWithCollision>

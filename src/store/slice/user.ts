@@ -5,25 +5,48 @@ import { LogIn } from "lucide-react";
 interface userSliceSchema {
   id: string;
   name: string;
-  forsession:string;
+  userType?: string;
   email:string;
+  studentid?: string;
+  teacherid?: string;
+  hodid?: string;
 }
 
 const userSlice = createSlice({
   name: "user",
-  initialState: { id: "", name: "",forsession:"",email:"" } as userSliceSchema,
+  initialState: { id: "", name: "",forsession:"",email:"",studentid:"",teacherid:"",hodid:"" } as userSliceSchema,
   reducers: {
     login: (state, action) => {
-      state.id = action.payload.id;
-      state.name = action.payload.name;
-      state.forsession = action.payload.session_id;
-      state.email = action.payload.email;
+      if(action.payload.userType==="TEACHER"){
+        state.id = action.payload.id;
+        state.name = action.payload.name;
+        state.userType=action.payload.userType;
+        state.email = action.payload.email;
+        state.teacherid=action.payload.teacherid;
+      }
+      if(action.payload.userType==="STUDENT"){
+        state.id = action.payload.id;
+        state.name = action.payload.name;
+        state.userType=action.payload.userType;
+        state.email = action.payload.email;
+        state.studentid=action.payload.studentid;
+      }
+      if(action.payload.userType==="HOD"){
+        state.id = action.payload.id;
+        state.name = action.payload.name;
+        state.userType=action.payload.userType;
+        state.email = action.payload.email;
+        state.hodid=action.payload.hodid;
+      }
     },
     logout: (state) => {
       state.id = "";
       state.name = "";
-      state.forsession="";
+      state.userType="";
       state.email="";
+      state.studentid="";
+      state.teacherid="";
+      state.hodid="";
     },
   },
 });

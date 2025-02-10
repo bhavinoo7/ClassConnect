@@ -36,9 +36,6 @@ const server = express();
 
 app.prepare().then(() => {
 
-  
-
-  // Create an HTTP server for the socket.io server
   const httpServer = http.createServer(server);
 
   // Initialize Socket.IO with the HTTP serve

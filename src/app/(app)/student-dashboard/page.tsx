@@ -51,8 +51,7 @@ const page: React.FC = () => {
       const session = await getSession();
       if (session) {
         setSession(session.user.formfilled ?? false);
-        setsession_id(session.user.session_id as string);
-        setqemail(session.user.qemail as string);
+        
         setstudentid(session.user.studentid as string);
       }
     }
@@ -60,23 +59,7 @@ const page: React.FC = () => {
   }, []);
   console.log(session_id);
   console.log(qemail);  
-  useEffect(() => {
-    if (session_id.length > 0 ) {
-      console.log("aaa");
-      socket.emit("get-student-session", { id: session_id,studentid:studentid });
-      socket.on("get-student-session", (data) => {
-        console.log("aaa");
-        console.log(data);
-        setSessionDetails(data);
-        setlive(true);
-      });
-      
-      
-      socket.on("session-not-found",()=>{
-        setlive(false);
-      })
-    }
-  }, [session_id,socket]);
+  
   useEffect(() => {
     socket.emit("get-student-details",{id});
     

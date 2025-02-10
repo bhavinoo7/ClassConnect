@@ -10,9 +10,13 @@ import { getSession } from 'next-auth/react'
 import { emit } from 'process'
 import { userActions } from '@/store/slice/user'
 import { useDispatch } from 'react-redux'
+import axios from 'axios'
+import { useAppSelector } from '@/hooks/hooks'
 
 const Nav = () => {
   const dispatch = useDispatch();
+  const {teacherid}=useAppSelector((state)=>state.user);
+  console.log(teacherid);
     let [profile, setProfile] = useState("https://res.cloudinary.com/durtlcmnb/image/upload/v1735891361/Healthcare_user_profile/ofvdziaspjfupznrdcdr.png");
       let [username,setUsername] = useState("");
       let [email,setEmail] = useState("");
@@ -27,10 +31,14 @@ const Nav = () => {
               setUsername(session.user.userName as string);
               setEmail(session.user.email as string);
               setType(session.user.usertype as string);
-              dispatch(userActions.login({email:session.user.email}));
             }
           }
+          async function fetchdivision(){
+            const res=await axios.post("/api/fetch-division",teacherid)
+            console.log(res.data);
+          }
           fetchData();
+          fetchdivision();
         },[])
   return (
     <div className="flex flex-row-reverse items-center space-y-2 md:space-y-0 md:space-x-2 m-2 gap-3">

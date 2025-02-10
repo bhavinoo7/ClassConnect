@@ -5,11 +5,9 @@ import AuthProvider from '../context/AuthProvider';
 import { Toaster } from '@/components/ui/toaster';
 
 import { Provider, Provider as ReduxProvider } from 'react-redux';
-import { PersistGate } from "redux-persist/integration/react";
-import { persistor } from "../store/store";
 import SetRedux from '@/components/setRedux';
-import {store} from '../store/store';
-
+import {store,persistor } from '../store/store';
+import { PersistGate } from "redux-persist/integration/react";
 const inter = Inter({ subsets: ['latin'] });
 
 interface RootLayoutProps {
@@ -24,7 +22,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <body className={inter.className}>
         {/* <Provider store={store}> */}
         <Provider store={store}>
-        <PersistGate persistor={persistor}>
+        <PersistGate loading={null} persistor={persistor}>
         <AuthProvider>
         <SetRedux/>
           {children}

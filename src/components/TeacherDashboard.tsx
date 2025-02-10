@@ -20,6 +20,7 @@ import { ApiResponse } from "@/types/ApiResponse";
 import { useToast } from "@/hooks/use-toast";
 import { setEngine } from "crypto";
 import { session } from "@/model/Teacher";
+import { StudentAttendance } from "./StudentAttendance";
 const socket: Socket = io("http://localhost:3000", {
   path: "/api/socket", // Match the path defined in the server
   transports: ["websocket"], // Ensure WebSocket is used
@@ -214,7 +215,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ slots,email,teacher
                           create Session
                         </Button>
                       ) : (
-                        <AnimatedModalDemo data={liveSlots} data1={session_id} email={email} teacherid={teacherid} />
+                        <StudentAttendance/>
                       )}
                     </TableCell>
                   </TableRow>

@@ -14,6 +14,7 @@ export interface Teacher extends Document {
   lectures: Array<mongoose.Schema.Types.ObjectId>;
   sessions: Array<mongoose.Schema.Types.ObjectId>;
   currentent_session: mongoose.Schema.Types.ObjectId;
+  divisions: Array<mongoose.Schema.Types.ObjectId>;
 }
 
 export interface session extends Document {
@@ -41,7 +42,8 @@ const TeacherSchema: Schema<Teacher> = new Schema({
   ismentor: { type: Boolean, default: false },
   lectures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Slot", default: null }],
   sessions: [{ type: mongoose.Schema.Types.ObjectId, ref: "session", default: null }],
-  currentent_session: { type: mongoose.Schema.Types.ObjectId, ref: "session", default: null }
+  currentent_session: { type: mongoose.Schema.Types.ObjectId, ref: "session", default: null },
+  divisions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Division", default: null }],
 });
 
 const sessionSchema: Schema<session> = new Schema({

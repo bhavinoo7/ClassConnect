@@ -15,8 +15,6 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         identifier: { label: "Email or password", type: "text" },
         password: { label: "Password", type: "password" },
-        session_id: { label: "Session ID", type: "text" },
-        qemail: { label: "qemail", type: "text" },
       },
       async authorize(credentials: any): Promise<any> {
 
@@ -43,8 +41,6 @@ export const authOptions: NextAuthOptions = {
             user.password
           );
           if (checkPassword) {
-            user.session_id = credentials.session_id;
-            user.qemail = credentials.qemail;
             return user;
           } else {
             throw new Error("Incorrect password please enter correct password");
@@ -65,10 +61,9 @@ export const authOptions: NextAuthOptions = {
         token.image = user.image;
         token.formfilled = user.formfilled;
         token.email = user.email;
-        token.session_id = user.session_id;
-        token.qemail = user.qemail;
         token.studentid = user.studentid;
         token.teacherid=user.teacherid;
+        token.hodid = user.hodid;
       }
    return token;
     },
@@ -81,10 +76,9 @@ export const authOptions: NextAuthOptions = {
           (session.user.image = token.image),
           (session.user.userName = token.userName),
           (session.user.usertype = token.usertype);
-          (session.user.session_id = token.session_id);
-          (session.user.qemail = token.qemail);
           (session.user.studentid = token.studentid);
           (session.user.teacherid = token.teacherid);
+          (session.user.hodid = token.hodid); 
       }
       return session;
     },

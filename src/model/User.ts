@@ -17,6 +17,7 @@ export interface User extends Document {
   teacherid: mongoose.Schema.Types.ObjectId;
   session_id:string;
   qemail:string;
+  hodid:mongoose.Schema.Types.ObjectId;
 }
 
 const UserSchema: Schema<User> = new Schema({
@@ -66,6 +67,7 @@ const UserSchema: Schema<User> = new Schema({
       default: null,
     },
   teacherid: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher",default:null },
+  hodid: { type: mongoose.Schema.Types.ObjectId, ref: "Hod",default:null },
 });
 
 const UserModel =

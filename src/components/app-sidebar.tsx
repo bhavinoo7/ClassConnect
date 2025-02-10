@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { getSession } from "next-auth/react";
 import { useDispatch } from "react-redux";
-
+import { useAppDispatch } from "@/hooks/hooks";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +27,7 @@ import { userActions } from "@/store/slice/user";
 
 export function SidebarDemo({ children }: any) {
   const [currentUrl, setCurrentUrl] = useState("");
-  const dispatch=useDispatch();
+  const dispatch=useAppDispatch();
   useEffect(() => {
     if (typeof window !== "undefined") {
       setCurrentUrl(window.location.href); // Get the current URL safely

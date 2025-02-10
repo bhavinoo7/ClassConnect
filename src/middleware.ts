@@ -13,7 +13,8 @@ export const config = {
     "/",
     "/verify/:path*",
     "/student-complete-profile/:path*",
-    "/api/:path*"
+    "/api/:path*",
+    "/hod-dash/:path*",
   ],
 };
 
@@ -65,13 +66,16 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/teacher-dashboard", request.url));
     } else if (token?.usertype === "STUDENT" && token?.formfilled) {
       return NextResponse.redirect(new URL("/student-dashboard", request.url));
+    } else if(token?.usertype==="HOD" && token?.formfilled){
+      return NextResponse.redirect(new URL("/hod-dash", request.url));
     }
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
   if (
     token == null &&
     (url.pathname.startsWith("/student-dashboard") ||
-      url.pathname.startsWith("/teacher-dashboard"))
+      url.pathname.startsWith("/teacher-dashboard") ||
+      url.pathname.startsWith("/hod-dash"))
   ) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }

@@ -40,7 +40,8 @@
     "**/*.ts",
     "**/*.tsx",
     "next-env.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "server.ts"
     // ".next/types/**/*.ts"
   ],
   "exclude": [

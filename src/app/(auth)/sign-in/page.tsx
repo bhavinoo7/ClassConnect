@@ -25,37 +25,9 @@ import React, { useEffect, useState } from "react";
 import { userActions } from "@/store/slice/user";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-
+import { useAppDispatch,useAppSelector } from "@/hooks/hooks";
 const page = () => {
-  const [id, setid] = useState("");
-  const [name, setname] = useState("");
-  const [session_id1, setsession_id] = useState("");
-  const [email, setemail] = useState(""); 
-  const [s,sets]=useState("");
-  const [e,sete]=useState("");
-  useEffect(() => {
-    async function fetchData() {
-      const session = await getSession();
-      if (session) {
-        setid(session.user._id as string);
-        setname(session.user.name as string);
-        sets(session.user.session_id as string);
-        sete(session.user.qemail as string);
-        console.log(session);
-        console.log(session.user.session_id,"session_id");
-      }
-    }
-    console.log(queryParameters.get("session_id"));
-    if (queryParameters.get("session_id")!==null && queryParameters.get("email")!==null){ 
-      console.log("inside");
-      setsession_id(queryParameters.get("session_id") as string);
-      setemail(queryParameters.get("email") as string);
-    }
-    fetchData();
-  }, []);
-  console.log(session_id1); 
-  console.log(email);
-  const dispatch = useDispatch();
+
   const { toast } = useToast();
   const router = useRouter();
   const form = useForm<z.infer<typeof signInSchema>>({
@@ -69,12 +41,10 @@ const page = () => {
   });
   const onsubmit = async (data: z.infer<typeof signInSchema>) => {
     console.log(data);
-    console.log(session_id1);
+    
     const result = await signIn("credential", {
       identifier: data.identifier,
       password: data.password,
-      session_id:session_id1,
-      qemail:email,
       redirect: false,
     });
     console.log(result);
@@ -95,10 +65,7 @@ const page = () => {
     }
     if (result?.url) {
       localStorage?.setItem("status", "login");
-      console.log(s);
-      dispatch(
-        userActions.login({ id: id, name: name, session_id: s,email:e })
-      );
+    
       router.replace("/");
     }
   };
