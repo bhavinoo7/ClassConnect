@@ -10,8 +10,7 @@ import mongoose, { model, ObjectId } from "mongoose"; // Corrected import path
 import path from "path";
 import { Batch, Division } from "@/model/Division";
 import { Attendance } from "@/model/Timetable";
-import { AwardIcon } from "lucide-react";
-import { FunnelChart } from "recharts";
+
 const cluster = require("cluster");
 const os = require("os");
 const numCPUs = os.cpus().length;

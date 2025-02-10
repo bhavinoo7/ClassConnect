@@ -16,6 +16,7 @@ export const config = {
     "/api/:path*",
     "/hod-dash/:path*",
   ],
+  runtime: 'nodejs',
 };
 
 

@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['res.cloudinary.com', 'example.com', 'anotherdomain.com'],
   },
+  experimental: {
+    forceSwcTransforms: true, 
+  },
 };
 
 export default nextConfig;
