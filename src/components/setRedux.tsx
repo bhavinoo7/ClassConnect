@@ -1,11 +1,10 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useDispatch } from "react-redux";
 import { userActions } from "@/store/slice/user";
 import { useAppDispatch } from "@/hooks/hooks";
-import Student from "@/model/Student";
 
-const setRedux = () => {
+
+const SetRedux = () => {
   const { data: session, status } = useSession();
   const dispatch = useAppDispatch();
 
@@ -52,4 +51,4 @@ const setRedux = () => {
   return null;
 };
 
-export default setRedux;
+export default SetRedux;

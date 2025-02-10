@@ -1,7 +1,7 @@
 import React from 'react'
 import Student_details_form from '@/components/Student_details_form'
 
-const page = () => {
+const Page = () => {
   return (
     <div className='h-screen flex justify-center items-center'>
       <Student_details_form/>
@@ -9,4 +9,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page

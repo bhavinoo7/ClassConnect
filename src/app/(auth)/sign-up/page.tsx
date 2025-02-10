@@ -1,14 +1,13 @@
 "use client"
 import { useEffect, useState } from "react"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { signUpSchema } from "@/schemas/SignUpSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { useDebounceValue,useDebounceCallback } from 'usehooks-ts';
+import { useDebounceCallback } from 'usehooks-ts';
 import * as z  from "zod"
 import { Button } from "@/components/ui/button"
-import { Toaster } from "@/components/ui/toaster"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import axios, { AxiosError } from "axios"
@@ -22,9 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// import { useDebounce } from 'use-debounce'; 
 
-const page = () => {
+const Page = () => {
   const [username, setUsername] = useState('');
   const [usernameMessage, setUsernameMessage] = useState('');
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
@@ -222,8 +220,6 @@ const page = () => {
   )
 }
 
-export default page
-function useDebounce(username: string, arg1: number) {
-  throw new Error("Function not implemented.")
-}
+export default Page
+
 

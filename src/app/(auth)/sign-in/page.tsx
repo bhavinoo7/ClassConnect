@@ -1,33 +1,29 @@
 "use client";
-
-import { useDispatch } from "react-redux";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-const queryParameters = new URLSearchParams(window.location.search);
+
 import { Input } from "@/components/ui/input";
 import { signInSchema } from "@/schemas/signInSchema";
-import { signUpSchema } from "@/schemas/SignUpSchema";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { getSession, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
-import { userActions } from "@/store/slice/user";
-import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
-import { useAppDispatch,useAppSelector } from "@/hooks/hooks";
-const page = () => {
+import React from "react";
 
+import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/hooks/hooks";
+const Page = () => {
+  const {userType}=useAppSelector(state=>state.user);
   const { toast } = useToast();
   const router = useRouter();
   const form = useForm<z.infer<typeof signInSchema>>({
@@ -35,13 +31,13 @@ const page = () => {
     defaultValues: {
       identifier: "",
       password: "",
-      session_id:"",
-      qemail:"",
+      session_id: "",
+      qemail: "",
     },
   });
   const onsubmit = async (data: z.infer<typeof signInSchema>) => {
     console.log(data);
-    
+
     const result = await signIn("credential", {
       identifier: data.identifier,
       password: data.password,
@@ -65,8 +61,20 @@ const page = () => {
     }
     if (result?.url) {
       localStorage?.setItem("status", "login");
-    
+      if(userType==="TEACHER")
+      {
+        router.replace("/teacher-dashboard");
+      }
+      if(userType==="STUDENT")
+      {
+        router.replace("/student-dashboard");
+      }
+      if(userType==="HOD")
+      {
+        router.replace("/hod-dash");
+      }else{
       router.replace("/");
+      }
     }
   };
   return (
@@ -126,4 +134,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

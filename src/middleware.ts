@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { string } from "zod";
 export { default } from "next-auth/middleware";
-import { signOut } from "next-auth/react";
+
 
 export const config = {
   matcher: [
@@ -24,12 +23,6 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const url = request.nextUrl
   console.log(token?.formfilled);
-
-  if(token && url.pathname.startsWith("/sign-in"))
-  {
-    signOut();
-  }
-  
   if(!token && url.pathname.startsWith("/student-complete-profile")){
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }

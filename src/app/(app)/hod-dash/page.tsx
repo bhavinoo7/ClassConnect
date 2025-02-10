@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect } from 'react'
 import { getSession } from 'next-auth/react'
-const page = () => {
+const Page = () => {
   useEffect(() => {
       async function fetchData() {
         const session = await getSession();
@@ -19,4 +19,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page
