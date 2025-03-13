@@ -1,26 +1,36 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { Modal, ModalBody, ModalContent, ModalFooter, ModalTrigger } from "./ui/animated-modal";
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalTrigger,
+} from "./ui/animated-modal";
 import { Button } from "./ui/button";
 import { Loader2 } from "lucide-react";
 import axios from "axios";
 import Teacher_live_table from "./Teacher_live_table";
+import { useAppSelector } from "@/hooks/hooks";
+import { useToast } from "@/hooks/use-toast";
 
-export function StudentAttendance({ student, session_id, qemail }: any) {
+export function StudentAttendance({ session_id }: any) {
+  const {teacherid}=useAppSelector((state)=>state.user);
+  const {toast}=useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
-
+  const [recognize, setRecognize] = useState([]);
   const [recording, setRecording] = useState(false);
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [enable, setEnable] = useState(false);
   const [cloudinaryUrl, setCloudinaryUrl] = useState<string | null>(null);
-
+  const [StudentAttendance, setStudentAttendance] = useState([]);
   // Constraints for camera access
   const constraints = { video: true };
-
+ 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -29,7 +39,9 @@ export function StudentAttendance({ student, session_id, qemail }: any) {
       }
 
       recordedChunks.current = [];
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "video/webm",
+      });
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -60,7 +72,10 @@ export function StudentAttendance({ student, session_id, qemail }: any) {
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
       mediaRecorderRef.current.stop();
     }
     if (videoRef.current && videoRef.current.srcObject) {
@@ -88,14 +103,34 @@ export function StudentAttendance({ student, session_id, qemail }: any) {
     formData.append("folder", "Student_Attendance_Videos"); // Optional folder
 
     try {
-      const response = await fetch("https://api.cloudinary.com/v1_1/durtlcmnb/video/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/durtlcmnb/video/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
       const data = await response.json();
       if (data.secure_url) {
         setCloudinaryUrl(data.secure_url);
         setSubmitting(false);
+        const response = await axios.post("http://localhost:8000/recognize", {
+          video_url: data.secure_url,
+        });
+        console.log(response);
+       
+        if (response.data.message === "Face recognition completed") {
+          toast({
+            title: "Success",
+            description: "Face recognition completed",
+          });
+          setRecognize(response.data.recognized_students);
+          console.log(response.data.recognized_students);
+          const respons=await axios.post("/api/fetch-attendance",{session_id,recognize:response.data.recognized_students});
+      console.log(respons.data.data);  
+      setStudentAttendance(respons.data.data);
+          console.log(recognize);
+        }
         console.log("Uploaded Video URL:", data.secure_url);
       }
     } catch (error) {
@@ -107,7 +142,17 @@ export function StudentAttendance({ student, session_id, qemail }: any) {
   const submitAttendance = async () => {
     if (!cloudinaryUrl) return;
     console.log("Submitting attendance with video URL:", cloudinaryUrl);
-    // Add API request to submit attendance
+    setSubmitting(true);
+    const response=await axios.post("/api/close-session",{teacher_id:teacherid});
+    console.log(response);  
+    if (response.data.success) {
+      console.log("success");
+      toast({
+        title: "Success",
+        description: "Session closed successfully",
+      })
+    }
+    setSubmitting(false);
   };
 
   return (
@@ -123,7 +168,7 @@ export function StudentAttendance({ student, session_id, qemail }: any) {
         </ModalTrigger>
 
         <ModalBody>
-          <ModalContent>
+          <ModalContent className="overflow-y-auto h-96">
             <h4 className="text-lg md:text-2xl text-neutral-600 dark:text-neutral-100 font-bold text-center mb-8">
               Record Video for{" "}
               <span className="px-1 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 dark:border-neutral-700 border border-gray-200">
@@ -134,14 +179,20 @@ export function StudentAttendance({ student, session_id, qemail }: any) {
             <div className="flex flex-col items-center">
               <div className="bg-black md:w-[450px] md:h-[338px]">
                 {!videoUrl && (
-                  <video ref={videoRef} width={450} autoPlay playsInline muted />
+                  <video
+                    ref={videoRef}
+                    width={450}
+                    autoPlay
+                    playsInline
+                    muted
+                  />
                 )}
-                {videoUrl && (
-                  <video src={videoUrl} width={450} controls />
-                )}
+                {videoUrl && <video src={videoUrl} width={450} controls />}
               </div>
               <div className="mt-1 flex justify-between md:w-[450px]">
-                {!recording && <Button onClick={startRecording}>Start Recording</Button>}
+                {!recording && (
+                  <Button onClick={startRecording}>Start Recording</Button>
+                )}
                 {recording && <Button onClick={stopRecording}>Stop</Button>}
                 {videoUrl && <Button onClick={resetRecording}>Reset</Button>}
               </div>
@@ -149,23 +200,36 @@ export function StudentAttendance({ student, session_id, qemail }: any) {
 
             {videoUrl && (
               <div className="flex flex-col items-center mt-4">
-                {!cloudinaryUrl && <Button onClick={uploadVideo} disabled={submitting}>
-                  {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Upload Video"}
-                </Button>}
+                {!cloudinaryUrl && (
+                  <Button onClick={uploadVideo} disabled={submitting}>
+                    {submitting ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      "Upload Video"
+                    )}
+                  </Button>
+                )}
                 {cloudinaryUrl && (
                   <p className="text-green-500">Video uploaded successfully!</p>
                 )}
               </div>
             )}
-            <Teacher_live_table/>
+            <div className="">
+            <Teacher_live_table attendance={StudentAttendance} />
+            </div>
           </ModalContent>
 
           <ModalFooter className="gap-4">
-            <Button className="bg-black text-white dark:bg-white dark:text-black text-sm px-2 py-1 rounded-md border border-black w-28"
+            <Button
+              className="bg-black text-white dark:bg-white dark:text-black text-sm px-2 py-1 rounded-md border border-black w-28"
               onClick={submitAttendance}
               disabled={!cloudinaryUrl}
             >
-              {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Submit"}
+              {submitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                "Submit"
+              )}
             </Button>
           </ModalFooter>
         </ModalBody>

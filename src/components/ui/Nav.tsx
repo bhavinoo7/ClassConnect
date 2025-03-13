@@ -7,15 +7,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 
 import { Avatar, AvatarFallback, AvatarImage } from './avatar'
 import { getSession } from 'next-auth/react'
-import { emit } from 'process'
-import { userActions } from '@/store/slice/user'
-import { useDispatch } from 'react-redux'
 import axios from 'axios'
 import { useAppSelector } from '@/hooks/hooks'
-
+import { Button } from './button'
+import { useRouter } from 'next/navigation'
 const Nav = () => {
-  const dispatch = useDispatch();
   const {teacherid}=useAppSelector((state)=>state.user);
+  const router=useRouter();
+  const [div, setDiv] = useState<{ division_code: string; division_id: string }[]>([]);
+  const [ismentor,setIsMentor]=useState(false);
   console.log(teacherid);
     let [profile, setProfile] = useState("https://res.cloudinary.com/durtlcmnb/image/upload/v1735891361/Healthcare_user_profile/ofvdziaspjfupznrdcdr.png");
       let [username,setUsername] = useState("");
@@ -33,18 +33,28 @@ const Nav = () => {
               setType(session.user.usertype as string);
             }
           }
+          if(teacherid){
           async function fetchdivision(){
-            const res=await axios.post("/api/fetch-division",teacherid)
-            console.log(res.data);
+            console.log(teacherid);
+            const res=await axios.post("/api/fetch-division",teacherid);
+            console.log(res.data.data);
+            setDiv(res.data.data)
+            if(res.data.message=="ismentor")
+            {
+              setIsMentor(true);
+            }
           }
-          fetchData();
           fetchdivision();
+        }
+          fetchData();
         },[])
+        console.log(div);
   return (
     <div className="flex flex-row-reverse items-center space-y-2 md:space-y-0 md:space-x-2 m-2 gap-3">
         <Logo profile={profile} username={username} email={email}/>
 
-        {type=="TEACHER"?<div className="md:basis-1/4">
+        {type=="TEACHER"?<div className="md:basis-1/4 flex flex-row-reverse items-center space-y-2 md:space-y-0 md:space-x-2 m-2 gap-3">
+       
           <LabelInputContainer className="">
             {/* <Label htmlFor="division">Select Division For Show Data</Label> */}
             <Select name="division" required>
@@ -52,16 +62,17 @@ const Nav = () => {
                 <SelectValue placeholder="Select Division" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="A">A</SelectItem>
-                <SelectItem value="B">B</SelectItem>
-                <SelectItem value="C">C</SelectItem>
-                <SelectItem value="D">D</SelectItem>
-                <SelectItem value="E">E</SelectItem>
-                <SelectItem value="F">F</SelectItem>
+                {div.map((divs)=>{
+                  return <SelectItem value={divs.division_id} key={divs.division_id}>{divs.division_code}</SelectItem>
+                })}
               </SelectContent>
             </Select>
           </LabelInputContainer>
-        </div>:<></>}
+          {ismentor?<Button onClick={()=>router.replace("teacher-dashboard/divisions")}>Divisions</Button>:<></>}
+        </div>
+         
+         :<></>
+        }
       </div>
   )
 }

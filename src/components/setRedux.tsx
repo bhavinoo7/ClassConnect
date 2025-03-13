@@ -28,7 +28,7 @@ const SetRedux = () => {
             name: session.user.userName,
             email: session.user.email,
             userType: session.user.usertype,
-            Studentid: session.user.studentid,
+            studentid: session.user.studentid,
           })
         );
       }

@@ -5,7 +5,7 @@ import { RootState } from "@/store/store";
 import TeacherDashboard from "@/components/TeacherDashboard";
 import { io, Socket } from "socket.io-client";
 import { useAppSelector } from "@/hooks/hooks";
-
+import { getDivisionSession } from "@/lib/divisionSession";
 const socket: Socket = io("http://localhost:3000", {
   path: "/api/socket", // Match the path defined in the server
   transports: ["websocket"], // Ensure WebSocket is used
@@ -17,7 +17,8 @@ const Page: React.FC = () => {
 
   console.log(email);
   console.log("Bhavin sorathiya", name);
-
+  const divisionData = getDivisionSession();
+  console.log("AAAA",divisionData);
   const [slots, setSlots] = useState<{ data?: any }>({});
   useEffect(() => {
     // Listen for responses

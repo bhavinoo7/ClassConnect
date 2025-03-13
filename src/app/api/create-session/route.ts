@@ -19,6 +19,7 @@ export async function POST(req: Request) {
       location,
       is_lab,
       batch_id,
+      subject_id
     } = await req.json();
     console.log(start_time);
     const data = new Date();
@@ -30,9 +31,11 @@ export async function POST(req: Request) {
       end_time,
       session_name: subject,
       location,
+      division_id,
       session_date: data,
       teacher: new mongoose.Types.ObjectId(teacher_id),
       status: "open",
+      subject_id
     });
     newsession.teacher = teacher_id;
     await newsession.save();

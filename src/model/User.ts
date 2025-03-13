@@ -18,6 +18,7 @@ export interface User extends Document {
   session_id:string;
   qemail:string;
   hodid:mongoose.Schema.Types.ObjectId;
+  isdivisonmentor:boolean;
 }
 
 const UserSchema: Schema<User> = new Schema({

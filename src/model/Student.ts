@@ -1,33 +1,37 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { gender, division } from "../types/ApiResponse";
-import { ST } from "next/dist/shared/lib/utils";
-import exp from "constants";
+
 export interface Student extends Document {
   name: string;
   email: string;
   contact_no: number;
   address: string;
-  branch_name: string;
-  division: division;
+  branch_name: mongoose.Schema.Types.ObjectId;
+  division: mongoose.Schema.Types.ObjectId;
   enroll_no: string;
   dob: Date;
-  gender: gender;
+  gender: string;
   userid: mongoose.Schema.Types.ObjectId;
-  lectures: Array<mongoose.Schema.Types.ObjectId>;
-  sessions: Array<mongoose.Schema.Types.ObjectId>;  
+  report: Array<mongoose.Schema.Types.ObjectId>;
+  ismodel: boolean;
 }
 
-export interface StudentSession extends Document {
-  session_id: mongoose.Schema.Types.ObjectId;
-  date: Date;
-  time: string;
-  distance:string;
-  student_location: string;
-  image: string;
-  IP: string;
+export interface StudentReport extends Document {
   student_id: mongoose.Schema.Types.ObjectId;
-  status: string; 
+  total_sessions: number;
+  present_sessions: number;
+  absent_sessions: number;
+  percentage: number;
+  subjects: Array<{
+    subject_id: mongoose.Schema.Types.ObjectId;
+    subject_name: string;
+    total_sessions: number;
+    attendance: Array<mongoose.Schema.Types.ObjectId>;
+    present_sessions: number;
+    absent_sessions: number;
+    percentage: number;
+  }>;
 }
+
 const StudentSchema: Schema<Student> = new Schema({
   name: {
     type: String,
@@ -43,18 +47,23 @@ const StudentSchema: Schema<Student> = new Schema({
     required: [true, "contact no is required"],
     unique: true,
   },
+  ismodel: {
+    type: Boolean,
+    default: false,
+  },
   address: {
     type: String,
     required: [true, "address is required"],
   },
   branch_name: {
-    type: String,
-    required: [true, "branch_name is required"],
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Department",
+    required: true,
   },
   division: {
-    type: String,
-    enum: Object.values(division),
-    default: division.A,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Division",
+    required: true,
   },
   enroll_no: {
     type: String,
@@ -67,77 +76,88 @@ const StudentSchema: Schema<Student> = new Schema({
   },
   gender: {
     type: String,
-    enum: Object.values(gender),
-    default: gender.Male,
+    default: "Male",
   },
   userid: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     default: null,
   },
-  lectures: [
+  report: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Slot",
-      default:null
-    },
-  ],
-  sessions: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "StudentSession",
-      default:null
+      ref: "Reports",
+      default: null,
     },
   ],
 });
 
-export const StudentSessionSchema: Schema<StudentSession> = new Schema({
-  session_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "session",
-    required: true,
-  },
-  date: {
-    type: Date,
-    required: [true, "date is required"],
-  },
-  time: {
-    type: String,
-    required: [true, "time is required"],
-  },
-  distance: {
-    type: String,
-    required: [true, "distance is required"],
-  },
-  student_location: {
-    type: String,
-    required: [true, "student_location is required"],
-  },
-  image: {
-    type: String,
-    required: [true, "image is required"],
-  },
-  student_id: {
+export const studentReportSchema: Schema<StudentReport> = new Schema({
+student_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Student",
     required: true,
   },
-  IP: {
-    type: String,
-    required: [true, "IP is required"],
+  total_sessions: {
+    type: Number,
+    default: 0,
   },
-  status: { 
-    type: String, 
-    default: "Not marked" 
+  present_sessions: {
+    type: Number,
+    default: 0,
   },
+  absent_sessions: {
+    type: Number,
+    default: 0,
+  },
+  percentage: {
+    type: Number,
+    default: 0,
+  },
+  subjects: [
+    {
+      subject_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Subject",
+        required: true,
+      },
+      subject_name: {
+        type: String,
+        required: true,
+      },
+      attendance: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Attendance",
+          default: null,
+        },
+      ],
+      total_sessions: {
+        type: Number,
+        default: 0,
+      },
+      present_sessions: {
+        type: Number,
+        default: 0,
+      },
+      absent_sessions: {
+        type: Number,
+        default: 0,
+      },
+      percentage: {
+        type: Number,
+        default: 0,
+      },
+    },
+  ],
 });
 
 const Student =
   (mongoose.models.Student as mongoose.Model<Student>) ||
   mongoose.model<Student>("Student", StudentSchema);
 
-export const StudentSession =
-  (mongoose.models.StudentSession as mongoose.Model<StudentSession>) ||
-  mongoose.model<StudentSession>("StudentSession", StudentSessionSchema);
+export const StudentReport =
+  (mongoose.models.StudentReport as mongoose.Model<StudentReport>) ||
+  mongoose.model<StudentReport>("StudentReport", studentReportSchema);
 
 export default Student;

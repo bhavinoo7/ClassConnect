@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { number } from "zod";
 
 // Slot interface for a single time slot
 export interface Slot {
@@ -7,20 +8,21 @@ export interface Slot {
   start_time: string; // e.g., "09:00 AM"
   end_time: string; // e.g., "09:50 AM" or "10:50 AM" for merged slots
   subject: string; // Reference to Subject (optional for breaks)
+  subject_id?: mongoose.Schema.Types.ObjectId;
   teacher?: mongoose.Schema.Types.ObjectId; // Reference to Teacher // Reference to Classroom/Lab (optional for breaks)
   is_lab: boolean; // True if it's a lab session
   merged_slots?: string;
-  lab?: Array<mongoose.Schema.Types.ObjectId>; 
-  iscompleted:boolean;// Example: "1-2", "3-4", "5-6" for labs
+  lab?: Array<mongoose.Schema.Types.ObjectId>;
+  iscompleted: boolean; // Example: "1-2", "3-4", "5-6" for labs
 }
 
 export interface Attendance {
   student_id: mongoose.Schema.Types.ObjectId;
-  IP: string;
+  
+  time: Date;
   date: Date;
-  location: string;
-  distance: number;
-  image: string;
+  vote: number;
+  confidence: number;
   status: string;
 }
 
@@ -78,6 +80,11 @@ const SlotSchema = new Schema<Slot>({
     ref: "Division",
     required: true,
   },
+  subject_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject",
+    required: true,
+  },
   slot_number: { type: Number, required: true }, // 1 to 6
   start_time: { type: String, required: true }, // Start time of the slot
   end_time: { type: String, required: true }, // End time of the slot
@@ -86,7 +93,8 @@ const SlotSchema = new Schema<Slot>({
   is_lab: { type: Boolean, default: false }, // Indicates if the slot is a lab session
   merged_slots: { type: String },
   lab: [LabSlotSchema],
-  iscompleted:{type:Boolean,default:false}
+  iscompleted: { type: Boolean, default: false },
+
   // Example: "1-2", "3-4", "5-6"
 });
 
@@ -96,34 +104,27 @@ const AttendanceSchema = new Schema<Attendance>({
     ref: "Student",
     required: true,
   },
-  IP: {
-    type: String,
-    default:null
-  },
+  
   date: {
     type: Date,
-   
-    default:null
+
+    default: null,
   },
-  location: {
-    type: String,
-    
-    default:null
+  time: {
+    type: Date,
+    default: Date.now,
   },
-  distance: {
+  vote: {
     type: Number,
-   
-    default:null
+    default: null,
   },
-  image: {
-    type: String,
-    
-    default:null
+  confidence: {
+    type: Number,
+    default: null,
   },
   status: {
     type: String,
     default: "Not marked",
-    
   },
 });
 
@@ -137,12 +138,36 @@ const DayScheduleSchema = new Schema<DaySchedule>({
 // Weekly timetable schema
 const WeeklyScheduleSchema = new Schema<WeeklySchedule>({
   days: {
-    Monday: { type: mongoose.Schema.Types.ObjectId,ref:"DaySchedule",required: true },
-    Tuesday: { type: mongoose.Schema.Types.ObjectId,ref:"DaySchedule",required: true },
-    Wednesday: { type: mongoose.Schema.Types.ObjectId,ref:"DaySchedule",required: true },
-    Thursday: { type: mongoose.Schema.Types.ObjectId,ref:"DaySchedule",required: true },
-    Friday: { type: mongoose.Schema.Types.ObjectId,ref:"DaySchedule",required: true },
-    Saturday: { type: mongoose.Schema.Types.ObjectId,ref:"DaySchedule",required: true },
+    Monday: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DaySchedule",
+      required: true,
+    },
+    Tuesday: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DaySchedule",
+      required: true,
+    },
+    Wednesday: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DaySchedule",
+      required: true,
+    },
+    Thursday: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DaySchedule",
+      required: true,
+    },
+    Friday: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DaySchedule",
+      required: true,
+    },
+    Saturday: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DaySchedule",
+      required: true,
+    },
   },
 });
 
@@ -158,7 +183,11 @@ const TimeTableSchema = new Schema<TimeTable>({
     ref: "Teacher",
     required: true,
   },
-  week: { type: mongoose.Schema.Types.ObjectId,ref:"WeeklySchedule", required: true },
+  week: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "WeeklySchedule",
+    required: true,
+  },
   valid_until: { type: Date, required: true },
 });
 

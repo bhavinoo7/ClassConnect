@@ -1,22 +1,10 @@
-"use client"
-import React, { useEffect } from 'react'
-import { getSession } from 'next-auth/react'
-const Page = () => {
-  useEffect(() => {
-      async function fetchData() {
-        const session = await getSession();
-        if (session) {
-          console.log(session.user);
-          console.log(session.user.hodid);
-        }
-      }
-      fetchData();
-    }, []);
+"use client";
+import { useRef, useState, useEffect } from "react";
+
+export default function Page() {
   return (
-    <div className='text-black'>
-      This is hod-dash/page.tsx
+    <div>
+      <h1>Page Dashboard</h1>
     </div>
   )
 }
-
-export default Page

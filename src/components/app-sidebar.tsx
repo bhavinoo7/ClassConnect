@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useEffect } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "./ui/sidebar";
+import { TeacherAttedanceActions } from "@/store/slice/teacherattendance";
 import {
   IconArrowLeft,
   IconBrandTabler,
@@ -24,8 +25,9 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { userActions } from "@/store/slice/user";
-
+import { useAppSelector } from "@/hooks/hooks";
 export function SidebarDemo({ children }: any) {
+  const {userType}=useAppSelector(state=>state.user);
   const [currentUrl, setCurrentUrl] = useState("");
   const dispatch=useAppDispatch();
   useEffect(() => {
@@ -33,7 +35,36 @@ export function SidebarDemo({ children }: any) {
       setCurrentUrl(window.location.href); // Get the current URL safely
     }
   }, []);
-  const links = [
+  const links = userType === "TEACHER" ? [
+    {
+      label: "Dashboard",
+      href: `/${currentUrl.split("/")[3]}`,
+      icon: (
+        <IconBrandTabler className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Student Attendance",
+      href: `/${currentUrl.split("/")[3]}/student-attendance`,
+      icon: (
+        <IconUserBolt className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Settings",
+      href: "#",
+      icon: (
+        <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Logout",
+      href: `logout`,
+      icon: (
+        <IconArrowLeft className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+  ]:[
     {
       label: "Dashboard",
       href: `/${currentUrl.split("/")[3]}`,
@@ -76,12 +107,16 @@ export function SidebarDemo({ children }: any) {
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             <div className="mt-5 flex flex-col gap-2">
               {links.map((link, idx) => (
+                
                 <button
                   key={idx}
                   onClick={() => {
+                    
                     if (link.label === "Logout") {
                       localStorage.removeItem("status");
                       dispatch(userActions.logout());
+                      dispatch(TeacherAttedanceActions.removeTeacherAttendance());
+                      dispatch(userActions.removereport());
                       signOut();
                     } else {
                       if (link.href) {

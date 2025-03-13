@@ -1,7 +1,8 @@
 import { session } from "@/model/Teacher";
 import { createSlice } from "@reduxjs/toolkit";
+import { m } from "framer-motion";
 import { LogIn } from "lucide-react";
-
+import { Reports } from "@/model/Division";
 interface userSliceSchema {
   id: string;
   name: string;
@@ -10,11 +11,14 @@ interface userSliceSchema {
   studentid?: string;
   teacherid?: string;
   hodid?: string;
+  student?:string;
+  studentname?:string;
+  studentreport?:Array<Reports>
 }
 
 const userSlice = createSlice({
   name: "user",
-  initialState: { id: "", name: "",forsession:"",email:"",studentid:"",teacherid:"",hodid:"" } as userSliceSchema,
+  initialState: { id: "", name: "",forsession:"",email:"",studentid:"",teacherid:"",hodid:"",student:"",studentname:"",studentreport:[] } as userSliceSchema,
   reducers: {
     login: (state, action) => {
       if(action.payload.userType==="TEACHER"){
@@ -39,6 +43,14 @@ const userSlice = createSlice({
         state.hodid=action.payload.hodid;
       }
     },
+    mysession:(state,action)=>{
+      state.student=action.payload.id;
+      state.studentname=action.payload.name;
+    },
+    outmySession:(state)=>{
+      state.student="";
+      state.studentname="";
+    },
     logout: (state) => {
       state.id = "";
       state.name = "";
@@ -48,7 +60,13 @@ const userSlice = createSlice({
       state.teacherid="";
       state.hodid="";
     },
-  },
+    fetchreport: (state, action) => {
+      state.studentreport = action.payload;
+    },
+    removereport:(state)=>{
+      state.studentreport=[];
+    }
+  }
 });
 
 export const userActions = userSlice.actions;   

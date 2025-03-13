@@ -3,7 +3,8 @@ import dbConnection from "@/lib/dbConnection";
 import CredentialsProvider from "next-auth/providers/credentials";
 import UserModel from "@/model/User";
 import bcrypt from "bcryptjs";
-import { session } from "@/model/Teacher";
+import { session, Teacher } from "@/model/Teacher";
+import { Division } from "@/model/Division";
 
 
 
@@ -41,6 +42,7 @@ export const authOptions: NextAuthOptions = {
             user.password
           );
           if (checkPassword) {
+            user.isdivisonmentor=false;
             return user;
           } else {
             throw new Error("Incorrect password please enter correct password");
@@ -50,6 +52,51 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    // CredentialsProvider({
+    //   id: "division",
+    //   name: "Division",
+    //   credentials: {
+    //     identifier: { label: "userid", type: "text" },
+    //     password: { label: "password", type: "password" },
+    //     division_id: { label: "Division ID", type: "text" },
+    //   },
+    //   async authorize(credentials: any): Promise<any> {
+
+    //     await dbConnection();
+    //     try {
+    //       const user1=await Teacher.findById(credentials.identifier);
+    //       console.log(user1);
+    //       console.log(credentials);
+    //       if (!user1) {
+    //         throw new Error("User not Found");
+    //       }
+    //       const user=await UserModel.findById(user1.user_id);
+    //       const checkPassword = await bcrypt.compare(
+    //         credentials.password,
+    //         user1.mentor.password
+    //       );
+    //       console.log(checkPassword);
+    //       if (checkPassword) {
+    //         const division=await Division.findById(credentials.division_id);
+    //         const mentor=division?.mentor.filter((mentor)=>mentor==credentials.identifier);
+    //         if(mentor){
+    //           if (user) {
+    //             user.isdivisonmentor = true;
+    //           }
+    //           return user;
+    //         }
+    //         else{
+    //           throw new Error("You are not mentor of this division");
+    //         }
+    //       } else {
+    //         throw new Error("Incorrect password please enter correct password");
+    //       }
+    //     } catch (err: any) {
+    //       throw new Error(err);
+    //     }
+    //   },
+    // }),
+    
   ],
   callbacks: {
     async jwt({ token, user }) {
@@ -64,6 +111,7 @@ export const authOptions: NextAuthOptions = {
         token.studentid = user.studentid;
         token.teacherid=user.teacherid;
         token.hodid = user.hodid;
+        token.isdivisonmentor=user.isdivisonmentor;
       }
    return token;
     },
@@ -78,7 +126,8 @@ export const authOptions: NextAuthOptions = {
           (session.user.usertype = token.usertype);
           (session.user.studentid = token.studentid);
           (session.user.teacherid = token.teacherid);
-          (session.user.hodid = token.hodid); 
+          (session.user.hodid = token.hodid);
+          (session.user.isdivisonmentor = token.isdivisonmentor); 
       }
       return session;
     },

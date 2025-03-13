@@ -14,15 +14,30 @@ export const config = {
     "/student-complete-profile/:path*",
     "/api/:path*",
     "/hod-dash/:path*",
+    "/division-dashboard/:path*"
   ],
   runtime: 'nodejs',
 };
 
 
 export async function middleware(request: NextRequest) {
+  const divisionSession = request.cookies.get("divisionSession"); 
+  
+  const divisionData = divisionSession ? JSON.parse(divisionSession.value) : null;
+  console.log("AAA",divisionData);
   const token = await getToken({ req: request });
   const url = request.nextUrl
   console.log(token?.formfilled);
+  if(token?.usertype=="TEACHER" && url.pathname.startsWith("/division-dashboard") && divisionData!==null)
+  {
+    console.log("yes");
+    return NextResponse.next();
+  }
+  if(token?.usertype=="TEACHER" && url.pathname.startsWith("/division-dashboard") && divisionData===null)
+  {
+    console.log("no");
+    return NextResponse.redirect(new URL("/teacher-dashboard", request.url));
+  }
   if(!token && url.pathname.startsWith("/student-complete-profile")){
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
@@ -42,6 +57,7 @@ export async function middleware(request: NextRequest) {
       url.pathname === "/")
   ) {
     if (token?.usertype === "TEACHER" && !token?.formfilled) {
+  
       if(!token)
       {
         return NextResponse.redirect(new URL("/sign-in", request.url));
@@ -69,7 +85,8 @@ export async function middleware(request: NextRequest) {
     token == null &&
     (url.pathname.startsWith("/student-dashboard") ||
       url.pathname.startsWith("/teacher-dashboard") ||
-      url.pathname.startsWith("/hod-dash"))
+      url.pathname.startsWith("/hod-dash")||
+      url.pathname.startsWith("/division-dashboard"))
   ) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }

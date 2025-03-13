@@ -13,6 +13,7 @@ declare module "next-auth" {
     studentid?: string; 
     teacherid?: string;
     hodid?: string;
+    isdivisonmentor?:boolean;
   }
   interface Session {
     user: {
@@ -26,6 +27,7 @@ declare module "next-auth" {
       studentid?: string;
       teacherid?: string;
       hodid?: string;
+      isdivisonmentor?:boolean;
     } & DefaultSession["user"];
   }
 }
@@ -42,5 +44,6 @@ declare module "next-auth/jwt" {
     studentid?: string; 
     teacherid?: string;
     hodid?: string;
+    isdivisonmentor?:boolean;
   }
 }

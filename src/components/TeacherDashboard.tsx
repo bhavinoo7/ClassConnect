@@ -125,7 +125,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ slots,email,teacher
     const division_id = liveSlots[0].division_id;
     const teacher_id = liveSlots[0].teacher;
     const is_lab = liveSlots[0].is_lab; 
-    
+    const subject_id = liveSlots[0].subject_id; 
     if(is_lab)
     {
       setbatch_id(liveSlots[0].labs[0].batch_id)
@@ -146,7 +146,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ slots,email,teacher
             teacher_id,
             location,
             is_lab,
-            batch_id
+            batch_id,
+            subject_id
           };
           console.log(formData);
           try {
@@ -215,7 +216,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ slots,email,teacher
                           create Session
                         </Button>
                       ) : (
-                        <StudentAttendance/>
+                        <StudentAttendance session_id={session_id}/>
                       )}
                     </TableCell>
                   </TableRow>

@@ -3,18 +3,23 @@ import userSlice from "./slice/user";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // Uses localStorage
 import { combineReducers } from "redux";
-const rootReducer = combineReducers({
-  user: userSlice.reducer,
-});
+import teacherattendanceSlice from "./slice/teacherattendance";
 const persistConfig = {
   key: "root",
   storage, // Saves state to localStorage
+  
 };
+import timetableslice from "./slice/timetable";
+
+const rootReducer = combineReducers({
+  user: persistReducer(persistConfig, userSlice.reducer),
+  teacherattendance: persistReducer(persistConfig,teacherattendanceSlice.reducer),
+  timetable:persistReducer(persistConfig,timetableslice.reducer)
+});
 
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false, // Required for Redux Persist

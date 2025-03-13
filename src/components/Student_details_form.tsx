@@ -14,22 +14,38 @@ import {
 } from "./ui/select";
 import { FileUpload } from "./ui/file-upload";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { AwardIcon, Loader2 } from "lucide-react";
 import { getSession, signOut } from "next-auth/react";
 import { useEffect } from "react";
 import axios, { AxiosError } from "axios";
-import { ApiResponse } from "@/types/ApiResponse";
+import { ApiResponse, division } from "@/types/ApiResponse";
 import { useRouter } from "next/navigation";
 import { StudentDetailSchema } from "@/schemas/StudentDetailsSchema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useDebounceCallback } from "usehooks-ts";
- 
+import { useAppDispatch } from "@/hooks/hooks";
+import { userActions } from "@/store/slice/user";
+import { Sign } from "crypto";
 
 const Student_details_form = () => {
+  
+  const dispatch=useAppDispatch();
   const [session, setSession] = useState("");
   const router = useRouter();
+  interface Department {
+    id: string;
+    name: string;
+  }
+
+  const [departments, setDepartments] = useState<Department[]>([]);
+  interface Division {
+    id: string;
+    name: string;
+  }
+  
+  const [division, setDivision] = useState<Division[]>([]);
   const debouncedUsername = useDebounceCallback(setSession, 3000);
   
   useEffect(() => {
@@ -42,6 +58,16 @@ const Student_details_form = () => {
     fetchData();
   }, []);
   console.log(session);
+
+  useEffect(() => {
+    async function fetchDepartment()
+    {
+    const response=await axios.get("/api/fetch-department");
+    console.log(response.data.data);
+    setDepartments(response.data.data);
+    }
+    fetchDepartment()
+  },[]);
 
   const [div, setdiv] = useState("");
   const [bran, setbran] = useState("");
@@ -68,7 +94,7 @@ const Student_details_form = () => {
     };
     console.log(data);
     try {
-      const response = await axios.post<ApiResponse>(
+      const response = await axios.post(
         "api/student-detail-form",
         {
           data,
@@ -77,10 +103,12 @@ const Student_details_form = () => {
       if (response.data.success) {
         toast({
           title: "Success",
-          description: response.data.message,
+          description: "Student details saved successfully",
         });
-        localStorage.removeItem("status");
-        signOut();
+       
+        dispatch(userActions.mysession({id:response.data.data.id,name:response.data.data.name}))
+       router.replace("student-complete-profile/face-recognize");
+        
       } else {
         toast({
           title: "Error",
@@ -186,6 +214,14 @@ const Student_details_form = () => {
     console.log(files);
   };
 
+  const handlebrachange = async(e: string) => {
+    console.log(e);
+    const response=await axios.post("/api/f-fetch-division",{department_id:e});
+    console.log(response.data.data);
+    setDivision(response.data.data);
+  };
+
+
   return (
     <>
       <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black">
@@ -268,27 +304,20 @@ const Student_details_form = () => {
                 <Select
                   name="branch_name"
                   required
-                  onValueChange={(e) => setbran(e)}
+                  onValueChange={(e) => {setbran(e) 
+                    handlebrachange(e)
+                  }}
+                  
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Branch" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Computer Engineering">
-                      Computer Engineering
-                    </SelectItem>
-                    <SelectItem value="Civil Engineering">
-                      Civil Engineering
-                    </SelectItem>
-                    <SelectItem value="Electric Engineering">
-                      Electric Engineering
-                    </SelectItem>
-                    <SelectItem value="Mechanical Engineering">
-                      Mechanical Engineering
-                    </SelectItem>
-                    <SelectItem value="Information Technology">
-                    Information Technology
-                    </SelectItem>
+                    {departments.map((department) => (
+                      <SelectItem key={department.id} value={department.id}>
+                        {department.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </LabelInputContainer>
@@ -317,12 +346,11 @@ const Student_details_form = () => {
                     <SelectValue placeholder="Select Division" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="A">A</SelectItem>
-                    <SelectItem value="B">B</SelectItem>
-                    <SelectItem value="C">C</SelectItem>
-                    <SelectItem value="D">D</SelectItem>
-                    <SelectItem value="E">E</SelectItem>
-                    <SelectItem value="F">F</SelectItem>
+                    {division?.map((div) => (
+                        <SelectItem key={div.id} value={div.id}>
+                          {div.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </LabelInputContainer>

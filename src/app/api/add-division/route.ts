@@ -3,7 +3,9 @@ import { Division } from "@/model/Division";
 import { Hod } from "@/model/Hod";
 import { Teacher } from "@/model/Teacher";  
 import { Department } from "@/model/Hod"; // Fixed import
-
+import bcrypt from "bcryptjs";
+import { sendAccessCredential } from "@/helpers/sendAccessCredential";
+import mongoose from "mongoose";
 interface RequestBody {
     divisionName: string;
     divisionCode: string;
@@ -41,7 +43,24 @@ export async function POST(req: Request) {
         for (const mentorId of mentors) {
             const teacher = await Teacher.findById(mentorId);
             if (teacher) {
-                teacher.ismentor = true;
+                if(teacher.mentor.ismentor===false)
+                {
+                    teacher.mentor.ismentor = true;
+                    let pass = generatePassword();
+                    const hashPassword = await bcrypt.hash(pass, 10);
+                    const email=teacher.email;
+                    const userName=teacher.name;
+                    const id=teacher._id.toString();
+                    const password=pass;
+                    const emailRespose = await sendAccessCredential(
+                          email,
+                          userName,
+                          id,
+                            password
+                        );
+                    teacher.mentor.password = hashPassword;
+                    await teacher.save();
+                }
                 teacher.divisions.push(division._id);
                 await teacher.save();
             }
@@ -72,4 +91,14 @@ export async function POST(req: Request) {
             { status: 500 }
         );
     }
+}
+
+function generatePassword(length = 8) {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charset.length);
+        password += charset[randomIndex];
+    }
+    return password;
 }
