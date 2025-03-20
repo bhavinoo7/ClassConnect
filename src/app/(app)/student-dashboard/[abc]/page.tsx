@@ -1,26 +1,31 @@
-"use client"
+"use client";
 
-import { ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon } from "lucide-react"
-import Link from "next/link"
-import { useEffect, useState } from "react"
+import { ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useParams, useSearchParams } from "next/navigation"
-import axios from "axios"
-import { v4 as uuidv4 } from 'uuid';
-// Mock attendance data
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useParams } from "next/navigation";
+
+import { v4 as uuidv4 } from "uuid";
 
 
-import { useAppSelector } from "@/hooks/hooks"
-
+import { useAppSelector } from "@/hooks/hooks";
 
 export default function Page() {
-  const {studentreport}=useAppSelector((state)=>state.user);
-  console.log(studentreport);
+  const { studentreport } = useAppSelector((state) => state.user);
+ 
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [subject_name, setSubject_name] = useState("");
   const params = useParams<{ abc: string }>();
@@ -33,100 +38,77 @@ export default function Page() {
   };
 
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
-  console.log(params.abc);
-  useEffect(() => {
-    async function fetchData() {  
-    console.log(params.abc);
-    if(params.abc.length>0){
-      console.log("Hello");
-      let id = 0;
-      studentreport?.map((item)=>{
-        if(item.subject_id===params.abc){
-          setSubject_name(item.subject_name as unknown as string);
-          item.attendance.map((item1:any)=>{ 
-            
-            setAttendanceData((prev)=>{
-              if(prev.filter((i)=>i.time===item1.time.split("T")[1]).length>0){
-                return prev;
-              }
-              return[...prev,{id: uuidv4(), date: item1.date.split("T")[0], time: item1.time.split("T")[1], status: item1.status, votes: item1.vote}]})
-          })
-          
-        }
-      })
-      
-    }
-  }
-  fetchData();
-  }, [params.abc]);
-  // const attendanceData = [
-  //   {
-  //     id: 1,
-  //     date: "2024-02-21",
-  //     time: "09:00 AM",
-  //     name: "John Smith",
-  //     status: "present",
-  //     votes: 3,
-  //   },
-  //   {
-  //     id: 2,
-  //     date: "2024-02-21",
-  //     time: "09:00 AM",
-  //     name: "Emma Wilson",
-  //     status: "absent",
-  //     votes: 4,
-  //   },
-  //   {
-  //     id: 3,
-  //     date: "2024-02-20",
-  //     time: "09:00 AM",
-  //     name: "John Smith",
-  //     status: "present",
-  //     votes: 5,
-  //   },
-  //   {
-  //     id: 4,
-  //     date: "2024-02-20",
-  //     time: "09:00 AM",
-  //     name: "Emma Wilson",
-  //     status: "present",
-  //     votes: 3,
-  //   },
-  //   {
-  //     id: 5,
-  //     date: "2024-02-19",
-  //     time: "09:00 AM",
-  //     name: "John Smith",
-  //     status: "absent",
-  //     votes: 4,
-  //   },
-  // ]
   
+  useEffect(() => {
+    async function fetchData() {
+      
+      if (params.abc.length > 0) {
+        
+        let id = 0;
+        studentreport?.map((item) => {
+          if (item.subject_id === params.abc) {
+            setSubject_name(item.subject_name as unknown as string);
+            item.attendance.map((item1: any) => {
+              setAttendanceData((prev) => {
+                if (
+                  prev.filter((i) => i.time === item1.time.split("T")[1])
+                    .length > 0
+                ) {
+                  return prev;
+                }
+                return [
+                  ...prev,
+                  {
+                    id: uuidv4(),
+                    date: item1.date.split("T")[0],
+                    time: item1.time.split("T")[1],
+                    status: item1.status,
+                    votes: item1.vote,
+                  },
+                ];
+              });
+            });
+          }
+        });
+      }
+    }
+    fetchData();
+  }, [params.abc]);
+ 
+
   // Calculate statistics
-  const totalClasses = attendanceData.length
-  const presentClasses = attendanceData.filter((record) => record.status === "Present").length
-  const attendancePercentage = Math.round((presentClasses / totalClasses) * 100)
+  const totalClasses = attendanceData.length;
+  const presentClasses = attendanceData.filter(
+    (record) => record.status === "Present"
+  ).length;
+  const attendancePercentage = Math.round(
+    (presentClasses / totalClasses) * 100
+  );
   console.log(attendanceData);
   type SortConfig = {
-    key: keyof (typeof attendanceData)[0]
-    direction: "asc" | "desc"
-  } | null
+    key: keyof (typeof attendanceData)[0];
+    direction: "asc" | "desc";
+  } | null;
   const sortedData = [...attendanceData].sort((a, b) => {
-    if (!sortConfig) return 0
+    if (!sortConfig) return 0;
 
-    const { key, direction } = sortConfig
-    if (a[key] < b[key]) return direction === "asc" ? -1 : 1
-    if (a[key] > b[key]) return direction === "asc" ? 1 : -1
-    return 0
-  })
+    const { key, direction } = sortConfig;
+    if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
+    if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
+    return 0;
+  });
 
   const requestSort = (key: keyof (typeof attendanceData)[0]) => {
-    let direction: "asc" | "desc" = "asc"
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc"
+    let direction: "asc" | "desc" = "asc";
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "asc"
+    ) {
+      direction = "desc";
     }
-    setSortConfig({ key, direction })
-  }
+    setSortConfig({ key, direction });
+  };
 
   const getSortIcon = (columnKey: keyof (typeof attendanceData)[0]) => {
     if (sortConfig?.key === columnKey) {
@@ -134,10 +116,10 @@ export default function Page() {
         <ArrowUpIcon className="ml-2 h-4 w-4" />
       ) : (
         <ArrowDownIcon className="ml-2 h-4 w-4" />
-      )
+      );
     }
-    return null
-  }
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-muted/40 p-8">
@@ -151,7 +133,6 @@ export default function Page() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold">{subject_name} Attendance</h1>
-           
           </div>
         </div>
 
@@ -187,20 +168,32 @@ export default function Page() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="cursor-pointer" onClick={() => requestSort("date")}>
+                  <TableHead
+                    className="cursor-pointer"
+                    onClick={() => requestSort("date")}
+                  >
                     Date
                     {getSortIcon("date")}
                   </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => requestSort("time")}>
+                  <TableHead
+                    className="cursor-pointer"
+                    onClick={() => requestSort("time")}
+                  >
                     Time
                     {getSortIcon("time")}
                   </TableHead>
-                  
-                  <TableHead className="cursor-pointer" onClick={() => requestSort("status")}>
+
+                  <TableHead
+                    className="cursor-pointer"
+                    onClick={() => requestSort("status")}
+                  >
                     Status
                     {getSortIcon("status")}
                   </TableHead>
-                  <TableHead className="cursor-pointer text-right" onClick={() => requestSort("votes")}>
+                  <TableHead
+                    className="cursor-pointer text-right"
+                    onClick={() => requestSort("votes")}
+                  >
                     Votes
                     {getSortIcon("votes")}
                   </TableHead>
@@ -211,11 +204,21 @@ export default function Page() {
                   <TableRow key={record.id}>
                     <TableCell>{record.date}</TableCell>
                     <TableCell>{record.time}</TableCell>
-                    
+
                     <TableCell>
-                      <Badge variant={record.status === "Present" ? "default" : "destructive"}>{record.status}</Badge>
+                      <Badge
+                        variant={
+                          record.status === "Present"
+                            ? "default"
+                            : "destructive"
+                        }
+                      >
+                        {record.status}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{record.votes?record.votes:0}</TableCell>
+                    <TableCell className="text-right">
+                      {record.votes ? record.votes : 0}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -224,6 +227,5 @@ export default function Page() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
-

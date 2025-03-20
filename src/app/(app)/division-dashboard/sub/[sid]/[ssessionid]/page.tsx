@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
 const page = () => {
   const { Subjects } = useAppSelector((state) => state.teacherattendance);
   const params = useParams();
@@ -41,22 +41,16 @@ const page = () => {
       confidence: any;
     }[]
   >([]);
-  console.log(Subjects);
+
   useEffect(() => {
     if (Subjects.length > 0) {
-      console.log("A");
       const newAttendance: any[] = [];
 
       Subjects.forEach((sub: any) => {
         if (sub?._id == params.sid) {
-          console.log("B");
-          console.log(sub);
           sub.attendance?.forEach((att: any) => {
-            console.log("C");
             if (att.session_id[0] == params.ssessionid) {
               att.Attendance.forEach((enroll: any) => {
-                console.log("D");
-
                 const data = {
                   student_name: enroll.student_id?.name,
                   student_enrollment: enroll.student_id?.enroll_no,
@@ -134,13 +128,13 @@ const page = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "present":
-        return "bg-green-500"
+        return "bg-green-500";
       case "absent":
-        return "bg-red-500"
+        return "bg-red-500";
       default:
-        return "bg-gray-500"
+        return "bg-gray-500";
     }
-  }
+  };
   return (
     <div className="container mx-auto py-8 px-4">
       <Card>
@@ -197,9 +191,7 @@ const page = () => {
                   <TableHead>Time</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className=" md:table-cell">Votes</TableHead>
-                  <TableHead className=" md:table-cell">
-                    confidence
-                  </TableHead>
+                  <TableHead className=" md:table-cell">confidence</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -213,7 +205,9 @@ const page = () => {
                       <TableCell>{enrollment.date}</TableCell>
                       <TableCell>{enrollment.time}</TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(enrollment.status)}>{enrollment.status}</Badge>
+                        <Badge className={getStatusColor(enrollment.status)}>
+                          {enrollment.status}
+                        </Badge>
                       </TableCell>
                       <TableCell className=" md:table-cell text-green-400">
                         {enrollment.votes ? enrollment.votes : "-"}

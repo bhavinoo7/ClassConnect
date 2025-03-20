@@ -10,20 +10,16 @@ import {
 } from "@/model/Division";
 import { StudentReport } from "@/model/Student";
 import { Reports } from "@/model/Division";
-import  Student  from "@/model/Student";
 
 export async function POST(req: Request) {
   dbConnection();
   try {
     let { teacher_id } = await req.json();
-    console.log("division close");
-    console.log(teacher_id);
-    const teacher = await Teacher.findById(teacher_id);
-    console.log(teacher);
-    const sessions = await session.findById(teacher.currentent_session);
-    console.log(sessions);
 
-    console.log(sessions);
+    const teacher = await Teacher.findById(teacher_id);
+
+    const sessions = await session.findById(teacher.currentent_session);
+
     const Divisionattendance = new DivisionAttendance({
       division_id: sessions.division_id,
       date: new Date(),
@@ -33,48 +29,39 @@ export async function POST(req: Request) {
       Attendance: sessions.Attendance,
     });
     await Divisionattendance.save();
-    console.log(Divisionattendance);
+
     const Present: any[] = [];
     const Absent: any[] = [];
     const attendancepush: any[] = [];
     Divisionattendance.Attendance.map(async (attendance: any) => {
-      const attendances = await Attendance.findById(attendance)
-      console.log(attendances);
+      const attendances = await Attendance.findById(attendance);
+
       attendancepush.push(attendances);
 
       if (attendances?.status === "Present") {
-        console.log("Present");
-        console.log(attendances.student_id);
         Present.push(attendances.student_id.toString());
       }
       if (attendances?.status === "Absent") {
-        console.log("Absent");
-        console.log(attendances.student_id);
         Absent.push(attendances.student_id.toString());
       }
     });
 
-    console.log(Present);
-    console.log(Absent);
-
     const subjects = await Subject.findById(sessions.subject_id);
     if (subjects) {
       subjects.total_session += 1;
-      subjects.total_completed_session+=1;
+      subjects.total_completed_session += 1;
     }
     subjects?.attendance.push(Divisionattendance._id as any);
-    console.log(subjects);
+
     await subjects?.save();
     const division = await Division.findById(sessions.division_id);
     const semester = await Semester.findById(division?.current_semester);
-    console.log(semester);
 
     semester?.sreports.map(async (se) => {
-      console.log(se);
       const studentreport = await Reports.findById(se);
-      console.log("B", studentreport);
+
       const report = await StudentReport.findById(studentreport?.report[0]);
-      console.log("A", report);
+
       if (report && report.total_sessions !== undefined) {
         report.total_sessions += 1;
         if (Present.includes(report.student_id.toString())) {
@@ -114,7 +101,7 @@ export async function POST(req: Request) {
             sub.percentage = (sub.present_sessions / sub.total_sessions) * 100;
           }
         });
-        console.log(report);
+
         await report.save();
       }
     });

@@ -1,9 +1,9 @@
 "use client";
 import { useRef, useState, useEffect } from "react";
 import { useAppSelector } from "@/hooks/hooks";
-import { fromJSON } from "postcss";
+
 import axios from "axios";
-import { Sign } from "crypto";
+
 import { signOut } from "next-auth/react";
 import { useAppDispatch } from "@/hooks/hooks";
 import { userActions } from "@/store/slice/user";
@@ -11,8 +11,7 @@ export default function Page() {
     const dispatch=useAppDispatch()
     const {student}=useAppSelector(state=>state.user);
     const {studentname}=useAppSelector(state=>state.user);
-    console.log(student);
-    console.log(studentname);
+   
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [instruction, setInstruction] = useState("Align your face in the center");
@@ -58,7 +57,7 @@ export default function Page() {
       });
 
       const result = await response.json();
-      console.log(result);
+    
       if (!result.success) {
         setInstruction(`Please correctly align your face (${step}) and retry.`);
         return;
@@ -79,7 +78,7 @@ export default function Page() {
         const result = await response.data;
         if(result.message=="Training completed!")
         {
-          console.log("done");
+          
           dispatch(userActions.outmySession());
           signOut();
           localStorage.removeItem("status");

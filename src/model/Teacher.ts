@@ -19,6 +19,8 @@ export interface Teacher extends Document {
   currentent_session: mongoose.Schema.Types.ObjectId;
   divisions: Array<mongoose.Schema.Types.ObjectId>;
   subject:Array<mongoose.Schema.Types.ObjectId>;
+  sendNotification:Array<mongoose.Schema.Types.ObjectId>;
+  notification:Array<mongoose.Schema.Types.ObjectId>; 
 }
 
 export interface session extends Document {
@@ -53,6 +55,20 @@ const TeacherSchema: Schema<Teacher> = new Schema({
   divisions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Division", default: null }],
   subject:[
     { type: mongoose.Schema.Types.ObjectId, ref: "Subject", default: null }
+  ],
+  sendNotification:[
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref:"sendNotification",
+      default:null
+    }
+  ],
+  notification:[
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref:"Notification",
+      default:null
+    }
   ]
 });
 

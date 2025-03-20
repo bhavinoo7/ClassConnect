@@ -4,18 +4,17 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Book, ChevronRight, GraduationCap } from "lucide-react";
+import { Book, GraduationCap } from "lucide-react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { TeacherAttedanceActions } from "@/store/slice/teacherattendance";
 import { useAppDispatch } from "@/hooks/hooks";
-import { v4 as uuidv4 } from "uuid";
+
 import {
   Card,
   CardContent,
@@ -23,46 +22,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useAppSelector } from "@/hooks/hooks";
-import { id } from "date-fns/locale";
-// Mock data for subjects
-// const subjects = [
-//   { id: "math101", name: "Mathematics 101" },
-//   { id: "phys101", name: "Physics 101" },
-//   { id: "chem101", name: "Chemistry 101" },
-//   { id: "bio101", name: "Biology 101" },
-//   { id: "cs101", name: "Computer Science 101" },
-// ];
-
-// Mock data for sessions
 
 export default function Page() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const teacher_id = searchParams.get("teacherid"); // Get query parameter
   const subject_id = searchParams.get("subjectid");
-  console.log(router);
+
   const { toast } = useToast();
   const dispatch = useAppDispatch();
   const [selectedSubject, setSelectedSubject] = useState("");
-//   const { teacherid } = useAppSelector((state) => state.user);
+  //   const { teacherid } = useAppSelector((state) => state.user);
   const [subject, setSubjects] = useState<any[]>([]);
   const [subjects, setSubjectss] = useState<any[]>([]);
   const [sessionData, setSessionData] = useState<any>({});
@@ -97,13 +67,11 @@ export default function Page() {
     const response = await axios.get(
       `/api/fetch-subject?teacherid=${teacher_id}`
     );
-    console.log(response.data.data);
-    console.log(teacher_id);
-    console.log(response.data);
+
     setSubjects(response.data.data);
     dispatch(TeacherAttedanceActions.setTeacherAttendance(response.data.data));
     setSelectedSubject(subject_id as string);
-    console.log(subject);
+
     return response.data;
   }
 
@@ -138,7 +106,6 @@ export default function Page() {
             Select a subject to view session details and attendance information.
           </p>
         </div>
-        
       </div>
 
       {selectedSubject ? (
@@ -195,7 +162,9 @@ export default function Page() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Link href={`/division-dashboard/sub//${selectedSubject}?teacherid=${teacher_id}&subjectid=${subject_id}`}>
+                  <Link
+                    href={`/division-dashboard/sub//${selectedSubject}?teacherid=${teacher_id}&subjectid=${subject_id}`}
+                  >
                     <Button>
                       View All Attendance
                       <GraduationCap className="ml-2 h-4 w-4" />

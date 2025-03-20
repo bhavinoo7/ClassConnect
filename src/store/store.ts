@@ -4,6 +4,7 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // Uses localStorage
 import { combineReducers } from "redux";
 import teacherattendanceSlice from "./slice/teacherattendance";
+import notificationSlice from "./slice/notification";
 const persistConfig = {
   key: "root",
   storage, // Saves state to localStorage
@@ -14,7 +15,8 @@ import timetableslice from "./slice/timetable";
 const rootReducer = combineReducers({
   user: persistReducer(persistConfig, userSlice.reducer),
   teacherattendance: persistReducer(persistConfig,teacherattendanceSlice.reducer),
-  timetable:persistReducer(persistConfig,timetableslice.reducer)
+  timetable:persistReducer(persistConfig,timetableslice.reducer),
+  notification:persistReducer(persistConfig,notificationSlice.reducer)
 });
 
 

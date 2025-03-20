@@ -1,24 +1,21 @@
 import dbConnection from "@/lib/dbConnection";
 import bcrypt from "bcryptjs";
-import { NextApiRequest, NextApiResponse } from "next";
 
 import { Division } from "@/model/Division";
 import { Teacher } from "@/model/Teacher";
 
-import Cookies from "cookies";
 export async function POST(req: Request) {
   const { identifier, password, division_id } = await req.json();
   await dbConnection();
   try {
     const user1 = await Teacher.findById(identifier);
-    console.log(user1);
 
     if (!user1) {
       throw new Error("User not Found");
     }
 
     const checkPassword = await bcrypt.compare(password, user1.mentor.password);
-    console.log(checkPassword);
+
     if (checkPassword) {
       const division = await Division.findById(division_id);
       const mentor = division?.mentor.includes(identifier);
@@ -26,9 +23,14 @@ export async function POST(req: Request) {
         const responseHeaders = new Headers();
         responseHeaders.append(
           "Set-Cookie",
-          `divisionSession=${JSON.stringify({ identifier, division_id })}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${24 * 60 * 60}`
+          `divisionSession=${JSON.stringify({
+            identifier,
+            division_id,
+          })}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${
+            24 * 60 * 60
+          }`
         );
-        console.log("Done division");
+
         return Response.json(
           {
             success: true,

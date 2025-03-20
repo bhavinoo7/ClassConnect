@@ -1,10 +1,29 @@
-"use client"
-
-import { useState } from "react"
-import { Clock, Plus, Save, Trash2, Coffee, Calendar, Edit, BookOpen } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+"use client";
+import { v4 as uuidv4 } from "uuid";
+import { type JSX, useEffect, useState } from "react";
+import {
+  Clock,
+  Plus,
+  Save,
+  Trash2,
+  Coffee,
+  Calendar,
+  Edit,
+  BookOpen,
+} from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+import { timeTableActions } from "@/store/slice/timetable";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -12,15 +31,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/hooks/use-toast"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import axios from "axios";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,263 +57,409 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-
-// Mock data for subjects
-const subjects = [
-  { id: "math101", name: "Mathematics 101" },
-  { id: "phys101", name: "Physics 101" },
-  { id: "chem101", name: "Chemistry 101" },
-  { id: "bio101", name: "Biology 101" },
-  { id: "cs101", name: "Computer Science 101" },
-  { id: "eng101", name: "English 101" },
-  { id: "hist101", name: "History 101" },
-  { id: "geo101", name: "Geography 101" },
-]
-
-// Mock data for semesters
-const semesters = [
-  { id: "fall2023", name: "Fall 2023" },
-  { id: "spring2024", name: "Spring 2024" },
-  { id: "summer2024", name: "Summer 2024" },
-  { id: "fall2024", name: "Fall 2024" },
-]
+} from "@/components/ui/alert-dialog";
 
 // Days of the week
-const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+const days = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 // Subject colors for the timetable
-const subjectColors: Record<string, string> = {
-  math101: "bg-blue-100 border-blue-300 text-blue-800",
-  phys101: "bg-green-100 border-green-300 text-green-800",
-  chem101: "bg-purple-100 border-purple-300 text-purple-800",
-  bio101: "bg-pink-100 border-pink-300 text-pink-800",
-  cs101: "bg-yellow-100 border-yellow-300 text-yellow-800",
-  eng101: "bg-red-100 border-red-300 text-red-800",
-  hist101: "bg-indigo-100 border-indigo-300 text-indigo-800",
-  geo101: "bg-orange-100 border-orange-300 text-orange-800",
-}
+
+const colors = [
+  "bg-blue-100 border-blue-300 text-blue-800",
+  "bg-green-100 border-green-300 text-green-800",
+  "bg-purple-100 border-purple-300 text-purple-800",
+  "bg-pink-100 border-pink-300 text-pink-800",
+  "bg-yellow-100 border-yellow-300 text-yellow-800",
+  "bg-red-100 border-red-300 text-red-800",
+  "bg-indigo-100 border-indigo-300 text-indigo-800",
+  "bg-orange-100 border-orange-300 text-orange-800",
+];
+const getRandomColor = (index: number) => colors[index % colors.length];
 
 // Type for timetable entry
 type TimetableEntry = {
-  id: string
-  day: string
-  startTime: string // in 24h format "HH:MM"
-  endTime: string // in 24h format "HH:MM"
-  subjectId?: string
-  isBreak?: boolean
-  isFreePeriod?: boolean
-  semesterId: string
-  classType?: "lecture" | "lab" // Added class type
-  batches?: BatchInfo[] // Added batches for lab sessions
-}
+  id: string;
+  day: string;
+  startTime: string; // in 24h format "HH:MM"
+  endTime: string; // in 24h format "HH:MM"
+  subjectId?: string;
+  isBreak?: boolean;
+  isFreePeriod?: boolean;
+  semesterId: string;
+  week_id: string;
+  teacher_name: string;
+  classType?: "lecture" | "lab"; // Added class type
+  batches?: BatchInfo[]; // Added batches for lab sessions
+};
 
 // Type for batch information
 type BatchInfo = {
-  id: string
-  name: string
-
-  location?: string
-  subjectId?: string // Add subject ID to allow different subjects per batch
-}
+  map(arg0: (batch: any) => JSX.Element): import("react").ReactNode;
+  id: string;
+  name: string;
+  teacher_name: string;
+  location?: string;
+  subjectId?: string; // Add subject ID to allow different subjects per batch
+};
 
 // Type for college hours
 type CollegeHours = {
-  startTime: string // in 24h format "HH:MM"
-  endTime: string // in 24h format "HH:MM"
-  semesterId: string // Added semester ID
-}
+  startTime: string; // in 24h format "HH:MM"
+  endTime: string; // in 24h format "HH:MM"
+  semesterId: string; // Added semester ID
+};
 
 // Type for holiday
 type Holiday = {
-  day: string
-  semesterId: string // Added semester ID
-}
+  day: string;
+  semesterId: string; // Added semester ID
+};
 
 // Type for semester
 type Semester = {
-  id: string
-  name: string
-}
+  id: string;
+  name: string;
+};
 
 // Add mock data for batches
-const defaultBatches = [
+const defaultBatches: { id: string; name: string }[] = [
   { id: "batch1", name: "Batch A" },
   { id: "batch2", name: "Batch B" },
   { id: "batch3", name: "Batch C" },
-]
-
-// Sample timetable data
-const sampleTimetableData: Record<string, TimetableEntry[]> = {
-  fall2023: [
-    {
-      id: "entry-1",
-      day: "Monday",
-      startTime: "09:00",
-      endTime: "10:30",
-      subjectId: "math101",
-      semesterId: "fall2023",
-      classType: "lecture",
-    },
-    {
-      id: "entry-2",
-      day: "Monday",
-      startTime: "11:00",
-      endTime: "12:30",
-      subjectId: "phys101",
-      semesterId: "fall2023",
-      classType: "lecture",
-    },
-    
-    {
-      id: "entry-5",
-      day: "Tuesday",
-      startTime: "11:30",
-      endTime: "13:00",
-      subjectId: "bio101",
-      semesterId: "fall2023",
-      classType: "lecture",
-    },
-  ],
-  spring2024: [
-    {
-      id: "entry-6",
-      day: "Wednesday",
-      startTime: "09:00",
-      endTime: "10:30",
-      subjectId: "cs101",
-      semesterId: "spring2024",
-      classType: "lecture",
-    },
-    
-  ],
-}
+];
 
 export default function Page() {
-  const { toast } = useToast()
+  const router = useRouter();
+  const [subjectColors, setcolor] = useState<Record<string, string>>({});
+  const [sampleTimetableData, setSampleData] = useState<
+    Record<string, TimetableEntry[]>
+  >({});
+  const [defaultBatches, setBatches] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const { division_id } = useAppSelector((state) => state.timetable);
+  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
+  const {
+    sem,
+  }: {
+    sem: {
+      id: any;
+      name: string;
+      current: boolean;
+    }[];
+  } = useAppSelector((state) => state.timetable);
+  const id = sem.map((sem) => {
+    if (sem?.current == true) {
+      return sem.id;
+    }
+  });
 
-  // Selected semester
-  const [selectedSemester, setSelectedSemester] = useState<string>(semesters[0].id)
+  const [semesters, setSemesters] = useState<
+    {
+      name: string;
+      id: any;
+      current: boolean;
+    }[]
+  >(sem);
+
+  const dispatch = useAppDispatch();
+  const [timeTableData, setTimeTableData] = useState<any>([]);
+
+  const [selectedSemester, setSelectedSemester] = useState(id[0]);
+  const [week_id, setWeekid] = useState("");
+
+  const { toast } = useToast();
+
+  async function fetchTimeTable() {
+    const response = await axios.get(
+      `/api/fetch-time-table?division_id=${division_id}`
+    );
+
+    dispatch(timeTableActions.addtimetable(response.data.data));
+    setTimeTableData(response.data.data);
+
+    return response.data;
+  }
+  const convertTo24Hour = (time12h: string): string => {
+    const [time, modifier] = time12h.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+
+    if (modifier === "PM" && hours !== 12) {
+      hours += 12;
+    } else if (modifier === "AM" && hours === 12) {
+      hours = 0;
+    }
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+      2,
+      "0"
+    )}`;
+  };
+  useEffect(() => {
+    timeTableData?.semesters?.map((sem: any) => {
+      if (sem._id.toString() === selectedSemester) {
+        const data: any = [];
+        const slot: any = [];
+        const batches: any = [];
+        setWeekid(sem.time_table.week._id);
+        sem.batch.map((b: any) => {
+          const obj: { id: string; name: string } = {
+            id: b._id,
+            name: b.batch_name,
+          };
+          batches.push(obj);
+        });
+        sem.time_table.week.days.map((d: any) => {
+          d.slots.map((s: any) => {
+            if (s.is_lab) {
+              const obj: {
+                id: string;
+                day: string;
+                startTime: string;
+                endTime: string;
+                semesterId: string;
+                classType: string;
+                batches: BatchInfo[];
+                week_id: string;
+              } = {
+                id: s._id,
+                day: d.day_name,
+                startTime: convertTo24Hour(s.start_time),
+                endTime: convertTo24Hour(s.end_time),
+                semesterId: s.semester_id,
+                classType: "lab",
+                week_id: sem.time_table.week._id,
+                batches: s.lab.map((l: any) => {
+                  return {
+                    id: l.batch_id._id,
+                    name: l.batch_id.batch_name,
+                    teacher_name: l.teacher_name,
+                    subjectId: l.subject_id,
+                    location: l.lab_location,
+                  };
+                }),
+              };
+              slot.push(obj);
+            } else {
+              const obj: {
+                id: string;
+                day: string;
+                startTime: string;
+                endTime: string;
+                subjectId: string;
+                semesterId: string;
+                classType: string;
+                teacher_name: string;
+                week_id: string;
+              } = {
+                id: s._id,
+                day: d.day_name,
+                week_id: sem.time_table.week._id,
+                startTime: convertTo24Hour(s.start_time),
+                endTime: convertTo24Hour(s.end_time),
+                subjectId: s.subject_id,
+                teacher_name: s.teacher_name,
+                semesterId: s.semester_id,
+                classType: "lecture",
+              };
+              slot.push(obj);
+            }
+          });
+        });
+        sem.subjects.map((se: any) => {
+          const obj: {
+            id: string;
+            name: string;
+            teacher_name: string;
+            teacher_id: string;
+          } = {
+            id: se._id,
+            name: se.subject_name,
+            teacher_name: se.teacher_id.name,
+            teacher_id: se.teacher_id._id,
+          };
+          data.push(obj);
+        });
+
+        setSubjects(data);
+
+        setBatches(batches);
+        setSampleData({ [`${selectedSemester}`]: slot });
+
+        const dynamicSubjectColorMap = subjects.reduce(
+          (acc, subject, index) => {
+            acc[subject.id] = getRandomColor(index);
+            return acc;
+          },
+          {} as Record<string, string>
+        );
+        setcolor(dynamicSubjectColorMap);
+      }
+    });
+  }, [timeTableData]);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["timetable"],
+    queryFn: fetchTimeTable,
+  });
 
   // College hours by semester
-  const [collegeHoursBySemester, setCollegeHoursBySemester] = useState<Record<string, CollegeHours>>(
-    semesters.reduce(
-      (acc, semester) => {
-        acc[semester.id] = {
-          startTime: "08:00",
-          endTime: "17:00",
-          semesterId: semester.id,
-        }
-        return acc
-      },
-      {} as Record<string, CollegeHours>,
-    ),
-  )
+  const [collegeHoursBySemester, setCollegeHoursBySemester] = useState<
+    Record<string, CollegeHours>
+  >({}); // Start with an empty object
+
+  useEffect(() => {
+    if (!semesters || semesters.length === 0) return;
+
+    const newCollegeHours = semesters.reduce((acc, semester) => {
+      acc[semester.id] = {
+        startTime: "08:00",
+        endTime: "17:00",
+        semesterId: semester.id,
+      };
+      return acc;
+    }, {} as Record<string, CollegeHours>);
+
+    setCollegeHoursBySemester(newCollegeHours);
+  }, [semesters]); // Runs when `semesters` changes
 
   // Get current college hours based on selected semester
-  const collegeHours = collegeHoursBySemester[selectedSemester]
+  const collegeHours = selectedSemester
+    ? collegeHoursBySemester[selectedSemester]
+    : undefined;
 
   // Timetable entries by semester
-  const [timetableBySemester, setTimetableBySemester] = useState<Record<string, TimetableEntry[]>>(sampleTimetableData)
-
+  const [timetableBySemester, setTimetableBySemester] =
+    useState<Record<string, TimetableEntry[]>>(sampleTimetableData);
+  useEffect(() => {
+    setTimetableBySemester(sampleTimetableData);
+  }, [sampleTimetableData]);
   // Get current timetable based on selected semester
-  const timetable = timetableBySemester[selectedSemester] || []
+  const timetable = selectedSemester
+    ? timetableBySemester[selectedSemester] || []
+    : [];
 
   // Holidays by semester
-  const [holidaysBySemester, setHolidaysBySemester] = useState<Record<string, Holiday[]>>(
-    semesters.reduce(
-      (acc, semester) => {
-        acc[semester.id] = []
-        return acc
-      },
-      {} as Record<string, Holiday[]>,
-    ),
-  )
+  const [holidaysBySemester, setHolidaysBySemester] = useState<
+    Record<string, Holiday[]>
+  >(
+    semesters.reduce((acc, semester) => {
+      acc[semester.id] = [];
+      return acc;
+    }, {} as Record<string, Holiday[]>)
+  );
 
   // Get current holidays based on selected semester
-  const holidays = holidaysBySemester[selectedSemester] || []
+  const holidays = selectedSemester
+    ? holidaysBySemester[selectedSemester] || []
+    : [];
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isCollegeHoursDialogOpen, setIsCollegeHoursDialogOpen] = useState(false)
-  const [currentEntry, setCurrentEntry] = useState<Partial<TimetableEntry>>({})
-  const [isEditing, setIsEditing] = useState(false)
-  const [activeTab, setActiveTab] = useState("view")
-  const [isHolidayDialogOpen, setIsHolidayDialogOpen] = useState(false)
-  const [isSemesterDialogOpen, setIsSemesterDialogOpen] = useState(false)
-  const [newSemester, setNewSemester] = useState<Partial<Semester>>({})
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
-  const [entryToDelete, setEntryToDelete] = useState<string | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCollegeHoursDialogOpen, setIsCollegeHoursDialogOpen] =
+    useState(false);
+  const [currentEntry, setCurrentEntry] = useState<Partial<TimetableEntry>>({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState("view");
+  const [old, setOld] = useState<Partial<TimetableEntry> | undefined>(
+    undefined
+  );
+  const [isHolidayDialogOpen, setIsHolidayDialogOpen] = useState(false);
+  const [isSemesterDialogOpen, setIsSemesterDialogOpen] = useState(false);
+  const [newSemester, setNewSemester] = useState<Partial<Semester>>({});
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   // Time slot interval in minutes (for grid display)
-  const timeSlotInterval = 30
+  const timeSlotInterval = 30;
 
   // Generate time slots based on college hours
   const generateTimeSlots = () => {
-    const slots = []
-    const [startHour, startMinute] = collegeHours.startTime.split(":").map(Number)
-    const [endHour, endMinute] = collegeHours.endTime.split(":").map(Number)
+    const slots: string[] = [];
+    if (!collegeHours) return slots;
 
-    let currentHour = startHour
-    let currentMinute = startMinute
+    const [startHour, startMinute] = collegeHours.startTime
+      .split(":")
+      .map(Number);
+    const [endHour, endMinute] = collegeHours.endTime.split(":").map(Number);
 
-    while (currentHour < endHour || (currentHour === endHour && currentMinute < endMinute)) {
-      slots.push(`${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`)
+    let currentHour = startHour;
+    let currentMinute = startMinute;
 
-      currentMinute += timeSlotInterval
+    while (
+      currentHour < endHour ||
+      (currentHour === endHour && currentMinute < endMinute)
+    ) {
+      slots.push(
+        `${currentHour.toString().padStart(2, "0")}:${currentMinute
+          .toString()
+          .padStart(2, "0")}`
+      );
+
+      currentMinute += timeSlotInterval;
       if (currentMinute >= 60) {
-        currentHour += 1
-        currentMinute = 0
+        currentHour += 1;
+        currentMinute = 0;
       }
     }
 
-    return slots
-  }
+    return slots;
+  };
 
-  const timeSlots = generateTimeSlots()
+  const timeSlots = generateTimeSlots();
 
   // Format time for display (convert from 24h to 12h format)
   const formatTime = (time24h: string) => {
-    const [hours, minutes] = time24h.split(":").map(Number)
-    const period = hours >= 12 ? "PM" : "AM"
-    const hours12 = hours % 12 || 12
-    return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`
-  }
+    const [hours, minutes] = time24h.split(":").map(Number);
+    const period = hours >= 12 ? "PM" : "AM";
+    const hours12 = hours % 12 || 12;
+    return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+  };
 
   // Format time range for display
   const formatTimeRange = (startTime: string, endTime: string) => {
-    return `${formatTime(startTime)} - ${formatTime(endTime)}`
-  }
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  };
 
   // Calculate duration in minutes
   const calculateDuration = (startTime: string, endTime: string) => {
-    const [startHour, startMinute] = startTime.split(":").map(Number)
-    const [endHour, endMinute] = endTime.split(":").map(Number)
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
 
-    const startMinutes = startHour * 60 + startMinute
-    const endMinutes = endHour * 60 + endMinute
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = endHour * 60 + endMinute;
 
-    return endMinutes - startMinutes
-  }
+    return endMinutes - startMinutes;
+  };
 
   // Format duration for display
   const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
 
     if (hours === 0) {
-      return `${mins} minutes`
+      return `${mins} minutes`;
     } else if (mins === 0) {
-      return `${hours} hour${hours > 1 ? "s" : ""}`
+      return `${hours} hour${hours > 1 ? "s" : ""}`;
     } else {
-      return `${hours} hour${hours > 1 ? "s" : ""} ${mins} minutes`
+      return `${hours} hour${hours > 1 ? "s" : ""} ${mins} minutes`;
     }
-  }
+  };
 
   // Handle form input changes
-  const handleInputChange = (field: keyof TimetableEntry, value: string | boolean | undefined | BatchInfo[]) => {
+  const handleInputChange = (
+    field: keyof TimetableEntry,
+    value: string | boolean | undefined | BatchInfo[]
+  ) => {
     // Special handling for classType
     if (field === "classType") {
-      const classType = value as "lecture" | "lab" | undefined
+      const classType = value as "lecture" | "lab" | undefined;
 
       // Create updated entry with the new class type
       const updatedEntry = {
@@ -294,16 +467,19 @@ export default function Page() {
         classType,
         // Reset batches based on class type
         batches: classType === "lab" ? currentEntry.batches || [] : [],
-      }
+      };
 
-      setCurrentEntry(updatedEntry)
+      setCurrentEntry(updatedEntry);
 
       // If switching to lab and no batches exist, add an initial batch after the state update
-      if (classType === "lab" && (!updatedEntry.batches || updatedEntry.batches.length === 0)) {
-        setTimeout(addBatch, 0)
+      if (
+        classType === "lab" &&
+        (!updatedEntry.batches || updatedEntry.batches.length === 0)
+      ) {
+        setTimeout(addBatch, 0);
       }
 
-      return
+      return;
     }
 
     // For boolean fields, ensure they're properly set
@@ -311,120 +487,135 @@ export default function Page() {
       setCurrentEntry({
         ...currentEntry,
         [field]: Boolean(value),
-      })
+      });
     } else {
       // Ensure we never set undefined for controlled inputs
-      const safeValue = value === undefined ? "" : value
+      const safeValue = value === undefined ? "" : value;
       setCurrentEntry({
         ...currentEntry,
         [field]: safeValue,
-      })
+      });
     }
-  }
+  };
 
   // Add a function to update batch information
-  const updateBatchInfo = (batchIndex: number, field: keyof BatchInfo, value: string) => {
-    if (!currentEntry.batches) return
+  const updateBatchInfo = (
+    batchIndex: number,
+    field: keyof BatchInfo,
+    value: string
+  ) => {
+    if (!currentEntry.batches) return;
 
-    const updatedBatches = [...currentEntry.batches]
-    updatedBatches[batchIndex] = {
-      ...updatedBatches[batchIndex],
-      [field]: value,
-    }
+    setCurrentEntry((prevEntry) => {
+      const updatedBatches = (prevEntry.batches ?? []).map((batch, index) =>
+        index === batchIndex ? { ...batch, [field]: value } : batch
+      );
 
-    setCurrentEntry({
-      ...currentEntry,
-      batches: updatedBatches,
-    })
-  }
+      return { ...prevEntry, batches: updatedBatches };
+    });
+  };
 
   // Add a function to add a batch
   const addBatch = () => {
     const newBatch: BatchInfo = {
-      id: `batch-${Date.now()}`,
-      name: `Batch ${currentEntry.batches?.length ? currentEntry.batches.length + 1 : 1}`,
-      subjectId: currentEntry.subjectId || "", // Use the main subject as default if available
+      id: "",
+      name: "",
+      subjectId: "",
+      teacher_name: "",
       location: "",
-    }
+      map: (arg0: (batch: any) => JSX.Element): import("react").ReactNode => {
+        throw new Error("Function not implemented.");
+      },
+    };
 
     setCurrentEntry({
       ...currentEntry,
       batches: [...(currentEntry.batches || []), newBatch],
-    })
-  }
+    });
+  };
 
   // Add a function to remove a batch
   const removeBatch = (batchIndex: number) => {
-    if (!currentEntry.batches) return
+    if (!currentEntry.batches) return;
 
-    const updatedBatches = [...currentEntry.batches]
-    updatedBatches.splice(batchIndex, 1)
+    const updatedBatches = [...currentEntry.batches];
+    updatedBatches.splice(batchIndex, 1);
 
     setCurrentEntry({
       ...currentEntry,
       batches: updatedBatches,
-    })
-  }
+    });
+  };
 
   // Check if a time slot is already occupied
-  const isTimeSlotOccupied = (day: string, startTime: string, endTime: string, entryId?: string) => {
+  const isTimeSlotOccupied = (
+    day: string,
+    startTime: string,
+    endTime: string,
+    entryId?: string
+  ) => {
     // Check against all existing entries
     return timetable.some((entry) => {
-      if (entryId && entry.id === entryId) return false
-      if (entry.day !== day) return false
+      if (entryId && entry.id === entryId) return false;
+      if (entry.day !== day) return false;
 
       // Parse times to minutes for easier comparison
-      const entryStartMinutes = timeToMinutes(entry.startTime)
-      const entryEndMinutes = timeToMinutes(entry.endTime)
-      const newStartMinutes = timeToMinutes(startTime)
-      const newEndMinutes = timeToMinutes(endTime)
+      const entryStartMinutes = timeToMinutes(entry.startTime);
+      const entryEndMinutes = timeToMinutes(entry.endTime);
+      const newStartMinutes = timeToMinutes(startTime);
+      const newEndMinutes = timeToMinutes(endTime);
 
       // Check for overlap
       return (
-        (newStartMinutes < entryEndMinutes && newEndMinutes > entryStartMinutes) ||
+        (newStartMinutes < entryEndMinutes &&
+          newEndMinutes > entryStartMinutes) ||
         (entryStartMinutes < newEndMinutes && entryEndMinutes > newStartMinutes)
-      )
-    })
-  }
+      );
+    });
+  };
 
   // Convert time string to minutes
   const timeToMinutes = (time: string) => {
-    const [hours, minutes] = time.split(":").map(Number)
-    return hours * 60 + minutes
-  }
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
 
   // Update the addEntry function to handle class type and batches
-  const addEntry = () => {
+  const addEntry = async () => {
     if (!currentEntry.day || !currentEntry.startTime || !currentEntry.endTime) {
       toast({
         title: "Missing Information",
         description: "Please fill in at least day, start time, and end time.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     // Validate times
-    const startMinutes = timeToMinutes(currentEntry.startTime!)
-    const endMinutes = timeToMinutes(currentEntry.endTime!)
+    const startMinutes = timeToMinutes(currentEntry.startTime!);
+    const endMinutes = timeToMinutes(currentEntry.endTime!);
 
     if (startMinutes >= endMinutes) {
       toast({
         title: "Invalid Time Range",
         description: "End time must be after start time.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     // If it's not a break or free period, require class type
-    if (!currentEntry.isBreak && !currentEntry.isFreePeriod && !currentEntry.classType) {
+    if (
+      !currentEntry.isBreak &&
+      !currentEntry.isFreePeriod &&
+      !currentEntry.classType
+    ) {
       toast({
         title: "Missing Information",
         description: "Please select a class type (lecture or lab).",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     // If it's a lecture and not a break or free period, require subject
@@ -438,8 +629,8 @@ export default function Page() {
         title: "Missing Information",
         description: "Please select a subject for this lecture.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     // If it's a lab, require at least one batch with a location and subject
@@ -453,8 +644,8 @@ export default function Page() {
         title: "Missing Information",
         description: "Please add at least one batch for this lab session.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     // Validate that each batch has a subject and location
@@ -464,65 +655,86 @@ export default function Page() {
       currentEntry.classType === "lab" &&
       currentEntry.batches
     ) {
-      const invalidBatch = currentEntry.batches.find((batch) => !batch.subjectId || !batch.location)
+      const invalidBatch = currentEntry.batches.find(
+        (batch) => !batch.subjectId || !batch.location
+      );
       if (invalidBatch) {
         toast({
           title: "Missing Information",
           description: `Please provide subject and location for batch "${invalidBatch.name}".`,
           variant: "destructive",
-        })
-        return
+        });
+        return;
       }
     }
 
-    if (isTimeSlotOccupied(currentEntry.day!, currentEntry.startTime!, currentEntry.endTime!, currentEntry.id)) {
+    if (
+      isTimeSlotOccupied(
+        currentEntry.day!,
+        currentEntry.startTime!,
+        currentEntry.endTime!,
+        currentEntry.id
+      )
+    ) {
       toast({
         title: "Time Slot Conflict",
-        description: "This time slot overlaps with an existing entry. Please choose a different time or day.",
+        description:
+          "This time slot overlaps with an existing entry. Please choose a different time or day.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     const newEntry: TimetableEntry = {
-      id: isEditing && currentEntry.id ? currentEntry.id : `entry-${Date.now()}`,
+      id:
+        isEditing && currentEntry.id ? currentEntry.id : `entry-${Date.now()}`,
       day: currentEntry.day!,
       startTime: currentEntry.startTime!,
       endTime: currentEntry.endTime!,
       subjectId: currentEntry.subjectId,
       isBreak: Boolean(currentEntry.isBreak),
       isFreePeriod: Boolean(currentEntry.isFreePeriod),
-      semesterId: selectedSemester,
+      semesterId: selectedSemester || "",
+      teacher_name: "",
+      week_id: currentEntry.week_id || week_id,
       classType: currentEntry.classType,
       batches: currentEntry.batches,
-    }
+    };
 
     if (isEditing) {
-      const updatedTimetable = timetable.map((entry) => (entry.id === newEntry.id ? newEntry : entry))
+      const updatedTimetable = timetable.map((entry) =>
+        entry.id === newEntry.id ? newEntry : entry
+      );
+
       setTimetableBySemester({
         ...timetableBySemester,
-        [selectedSemester]: updatedTimetable,
-      })
+        [selectedSemester || ""]: updatedTimetable,
+      });
       toast({
         title: "Entry Updated",
         description: "The timetable entry has been updated successfully.",
-      })
+      });
     } else {
-      const updatedTimetable = [...timetable, newEntry]
+      const updatedTimetable = [...timetable, newEntry];
+
+      const response = await axios.post("/api/add-slot", newEntry);
+      if (response.data.message == "Slot added successfully") {
+        router.replace("/division-dashboard/time-table");
+      }
       setTimetableBySemester({
         ...timetableBySemester,
-        [selectedSemester]: updatedTimetable,
-      })
+        [selectedSemester || ""]: updatedTimetable,
+      });
       toast({
         title: "Entry Added",
         description: "A new entry has been added to the timetable.",
-      })
+      });
     }
 
-    setIsDialogOpen(false)
-    setCurrentEntry({})
-    setIsEditing(false)
-  }
+    setIsDialogOpen(false);
+    setCurrentEntry({});
+    setIsEditing(false);
+  };
 
   // Edit an existing entry
   const editEntry = (entry: TimetableEntry) => {
@@ -537,49 +749,59 @@ export default function Page() {
       isFreePeriod: entry.isFreePeriod || false,
       classType: entry.classType as "lecture" | "lab" | undefined,
       batches: entry.batches || [],
-    }
+    };
+    setOld(entryCopy);
 
-    setCurrentEntry(entryCopy)
-    setIsEditing(true)
-    setIsDialogOpen(true)
-  }
+    setCurrentEntry(entryCopy);
+    setIsEditing(true);
+    setIsDialogOpen(true);
+  };
 
   // Confirm delete for an entry
   const confirmDeleteEntry = (id: string) => {
-    setEntryToDelete(id)
-    setIsDeleteConfirmOpen(true)
-  }
+    setEntryToDelete(id);
+    setIsDeleteConfirmOpen(true);
+  };
 
   // Delete an entry
-  const deleteEntry = () => {
-    if (!entryToDelete) return
+  const deleteEntry = async () => {
+    if (!entryToDelete) return;
 
-    const updatedTimetable = timetable.filter((entry) => entry.id !== entryToDelete)
+    const deleted = timetable.filter((e) => e.id === entryToDelete);
+
+    const response = await axios.post("/api/remove-slot", deleted);
+    if (response.data.message == "Entry deleted successfully") {
+      router.replace("/division-dashboard/time-table");
+    }
+
+    const updatedTimetable = timetable.filter(
+      (entry) => entry.id !== entryToDelete
+    );
     setTimetableBySemester({
       ...timetableBySemester,
       [selectedSemester]: updatedTimetable,
-    })
+    });
 
     toast({
       title: "Entry Deleted",
       description: "The timetable entry has been removed.",
-    })
+    });
 
-    setIsDeleteConfirmOpen(false)
-    setEntryToDelete(null)
-  }
+    setIsDeleteConfirmOpen(false);
+    setEntryToDelete(null);
+  };
 
   // Save the complete timetable
   const saveTimetable = () => {
     // Here you would typically send the timetable data to your backend
-    console.log("Saving timetable for semester:", selectedSemester, timetableBySemester[selectedSemester])
-    console.log("College hours:", collegeHoursBySemester[selectedSemester])
-    console.log("Holidays:", holidaysBySemester[selectedSemester])
+
     toast({
       title: "Timetable Saved",
-      description: `Your timetable for ${getSemesterName(selectedSemester)} has been saved successfully.`,
-    })
-  }
+      description: `Your timetable for ${getSemesterName(
+        selectedSemester
+      )} has been saved successfully.`,
+    });
+  };
 
   // Open dialog for adding a new entry
   const openAddDialog = (day?: string, startTime?: string) => {
@@ -588,16 +810,18 @@ export default function Page() {
       toast({
         title: "Holiday",
         description: `${day} is marked as a holiday. No classes can be scheduled.`,
-      })
-      return
+      });
+      return;
     }
 
-    let endTime = ""
+    let endTime = "";
     if (startTime) {
       // Calculate a default end time (1 hour after start)
-      const [hours, minutes] = startTime.split(":").map(Number)
-      const endHour = hours + 1
-      endTime = `${endHour.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
+      const [hours, minutes] = startTime.split(":").map(Number);
+      const endHour = hours + 1;
+      endTime = `${endHour.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}`;
     }
 
     // Set all form fields with default values to ensure controlled inputs
@@ -611,24 +835,26 @@ export default function Page() {
       classType: undefined, // Default to undefined so user must select
       subjectId: "",
       batches: [], // Initialize empty batches array
-    })
-    setIsEditing(false)
-    setIsDialogOpen(true)
-  }
+    });
+    setIsEditing(false);
+    setIsDialogOpen(true);
+  };
 
   // Update college hours
   const updateCollegeHours = () => {
     // Validate times
-    const startMinutes = timeToMinutes(collegeHours.startTime)
-    const endMinutes = timeToMinutes(collegeHours.endTime)
+    const startMinutes = collegeHours
+      ? timeToMinutes(collegeHours.startTime)
+      : 0;
+    const endMinutes = collegeHours ? timeToMinutes(collegeHours.endTime) : 0;
 
     if (startMinutes >= endMinutes) {
       toast({
         title: "Invalid Time Range",
         description: "End time must be after start time.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     setCollegeHoursBySemester({
@@ -637,100 +863,135 @@ export default function Page() {
         ...collegeHours,
         semesterId: selectedSemester,
       },
-    })
+    });
 
     toast({
       title: "College Hours Updated",
-      description: `College hours for ${getSemesterName(selectedSemester)} set to ${formatTime(collegeHours.startTime)} - ${formatTime(collegeHours.endTime)}`,
-    })
+      description: collegeHours
+        ? `College hours for ${getSemesterName(
+            selectedSemester
+          )} set to ${formatTime(collegeHours.startTime)} - ${formatTime(
+            collegeHours.endTime
+          )}`
+        : "College hours not set",
+    });
 
-    setIsCollegeHoursDialogOpen(false)
-  }
+    setIsCollegeHoursDialogOpen(false);
+  };
 
   // Toggle holiday status for a day
   const toggleHoliday = (day: string) => {
-    const updatedHolidays = [...holidays]
-    const existingIndex = updatedHolidays.findIndex((holiday) => holiday.day === day)
+    const updatedHolidays = [...holidays];
+    const existingIndex = updatedHolidays.findIndex(
+      (holiday) => holiday.day === day
+    );
 
     if (existingIndex >= 0) {
-      updatedHolidays.splice(existingIndex, 1)
+      updatedHolidays.splice(existingIndex, 1);
       toast({
         title: "Holiday Removed",
-        description: `${day} is no longer marked as a holiday for ${getSemesterName(selectedSemester)}.`,
-      })
+        description: `${day} is no longer marked as a holiday for ${getSemesterName(
+          selectedSemester
+        )}.`,
+      });
     } else {
-      updatedHolidays.push({ day, semesterId: selectedSemester })
+      updatedHolidays.push({ day, semesterId: selectedSemester });
       toast({
         title: "Holiday Added",
-        description: `${day} is now marked as a holiday for ${getSemesterName(selectedSemester)}.`,
-      })
+        description: `${day} is now marked as a holiday for ${getSemesterName(
+          selectedSemester
+        )}.`,
+      });
     }
 
     setHolidaysBySemester({
       ...holidaysBySemester,
       [selectedSemester]: updatedHolidays,
-    })
+    });
 
-    setIsHolidayDialogOpen(false)
-  }
+    setIsHolidayDialogOpen(false);
+  };
 
   // Get subject name by ID
   const getSubjectName = (id?: string) => {
-    if (!id) return ""
-    return subjects.find((subject) => subject.id === id)?.name || "Unknown Subject"
-  }
+    if (!id) return "";
+    return (
+      subjects.find((subject) => subject.id === id)?.name || "Unknown Subject"
+    );
+  };
 
   // Get semester name by ID
   const getSemesterName = (id: string) => {
-    return semesters.find((semester) => semester.id === id)?.name || "Unknown Semester"
-  }
+    return (
+      semesters.find((semester) => semester.id === id)?.name ||
+      "Unknown Semester"
+    );
+  };
 
   // Get entries for a specific day and time slot
   const getEntriesForTimeSlot = (day: string, timeSlot: string) => {
-    const slotMinutes = timeToMinutes(timeSlot)
+    const slotMinutes = timeToMinutes(timeSlot);
 
     return timetable.filter((entry) => {
-      if (entry.day !== day) return false
+      if (entry.day !== day) return false;
 
-      const entryStartMinutes = timeToMinutes(entry.startTime)
-      const entryEndMinutes = timeToMinutes(entry.endTime)
+      const entryStartMinutes = timeToMinutes(entry.startTime);
+      const entryEndMinutes = timeToMinutes(entry.endTime);
 
-      return slotMinutes >= entryStartMinutes && slotMinutes < entryEndMinutes
-    })
-  }
+      return slotMinutes >= entryStartMinutes && slotMinutes < entryEndMinutes;
+    });
+  };
 
   // Check if a time slot is the start of an entry
   const isStartOfEntry = (day: string, timeSlot: string) => {
-    return timetable.some((entry) => entry.day === day && entry.startTime === timeSlot)
-  }
+    return timetable.some(
+      (entry) => entry.day === day && entry.startTime === timeSlot
+    );
+  };
 
   // Calculate how many time slots an entry spans
   const calculateRowSpan = (entry: TimetableEntry) => {
-    const startMinutes = timeToMinutes(entry.startTime)
-    const endMinutes = timeToMinutes(entry.endTime)
-    const duration = endMinutes - startMinutes
+    const startMinutes = timeToMinutes(entry.startTime);
+    const endMinutes = timeToMinutes(entry.endTime);
+    const duration = endMinutes - startMinutes;
     // Use Math.ceil to ensure we cover all time slots, even partial ones
-    return Math.ceil(duration / timeSlotInterval)
-  }
+    return Math.ceil(duration / timeSlotInterval);
+  };
 
   // Check if a day is a holiday
   const isDayHoliday = (day: string) => {
-    return holidays.some((holiday) => holiday.day === day)
-  }
+    return holidays.some((holiday) => holiday.day === day);
+  };
 
   // Handle semester change
   const handleSemesterChange = (semesterId: string) => {
-    setSelectedSemester(semesterId)
-    setActiveTab("view") // Reset to view tab when changing semester
+    setSelectedSemester(semesterId);
+    setActiveTab("view"); // Reset to view tab when changing semester
+  };
+
+  const [hasFetched, setHasFetched] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p>Loading...</p>
+        <Progress value={50} />
+      </div>
+    );
   }
+
+  console.log("Bhavin", currentEntry);
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Advanced Timetable</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Advanced Timetable
+          </h1>
           <p className="text-muted-foreground">
-            Create a flexible timetable with custom time slots, breaks, and holidays
+            Create a flexible timetable with custom time slots, breaks, and
+            holidays
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -753,14 +1014,22 @@ export default function Page() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">{getSemesterName(selectedSemester)} Timetable</h2>
+            <h2 className="text-xl font-semibold">
+              {getSemesterName(selectedSemester)} Timetable
+            </h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={() => setIsCollegeHoursDialogOpen(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCollegeHoursDialogOpen(true)}
+            >
               <Clock className="mr-2 h-4 w-4" />
               College Hours
             </Button>
-            <Button variant="outline" onClick={() => setIsHolidayDialogOpen(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsHolidayDialogOpen(true)}
+            >
               <Calendar className="mr-2 h-4 w-4" />
               Holidays
             </Button>
@@ -782,7 +1051,8 @@ export default function Page() {
                 <div className="flex items-center gap-4">
                   <div className="text-lg font-medium">College Hours:</div>
                   <div className="text-lg">
-                    {formatTime(collegeHours.startTime)} - {formatTime(collegeHours.endTime)}
+                    {collegeHours ? formatTime(collegeHours.startTime) : "N/A"}{" "}
+                    - {collegeHours ? formatTime(collegeHours.endTime) : "N/A"}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -790,13 +1060,19 @@ export default function Page() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">Holidays:</span>
                       {holidays.map((holiday) => (
-                        <Badge key={holiday.day} variant="outline" className="bg-red-50 text-red-800 border-red-300">
+                        <Badge
+                          key={holiday.day}
+                          variant="outline"
+                          className="bg-red-50 text-red-800 border-red-300"
+                        >
                           {holiday.day}
                         </Badge>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">No holidays set</span>
+                    <span className="text-sm text-muted-foreground">
+                      No holidays set
+                    </span>
                   )}
                 </div>
               </div>
@@ -807,24 +1083,36 @@ export default function Page() {
         <TabsContent value="view" className="mt-0">
           <Card>
             <CardHeader>
-              <CardTitle>Weekly Schedule - {getSemesterName(selectedSemester)}</CardTitle>
-              <CardDescription>View your complete weekly timetable with custom time slots</CardDescription>
+              <CardTitle>
+                Weekly Schedule - {getSemesterName(selectedSemester)}
+              </CardTitle>
+              <CardDescription>
+                View your complete weekly timetable with custom time slots
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th className="border p-2 bg-muted font-medium text-left min-w-[100px]">Time</th>
+                      <th className="border p-2 bg-muted font-medium text-left min-w-[100px]">
+                        Time
+                      </th>
                       {days.map((day) => (
                         <th
                           key={day}
                           className={`border p-2 font-medium text-left min-w-[150px] ${
-                            isDayHoliday(day) ? "bg-red-50 text-red-800" : "bg-muted"
+                            isDayHoliday(day)
+                              ? "bg-red-50 text-red-800"
+                              : "bg-muted"
                           }`}
                         >
                           {day}
-                          {isDayHoliday(day) && <span className="ml-2 text-xs font-normal">(Holiday)</span>}
+                          {isDayHoliday(day) && (
+                            <span className="ml-2 text-xs font-normal">
+                              (Holiday)
+                            </span>
+                          )}
                         </th>
                       ))}
                     </tr>
@@ -842,7 +1130,10 @@ export default function Page() {
                           // Skip rendering for holidays
                           if (isDayHoliday(day)) {
                             return (
-                              <td key={`${day}-${timeSlot}`} className="border p-2 bg-red-50 text-red-800">
+                              <td
+                                key={`${day}-${timeSlot}`}
+                                className="border p-2 bg-red-50 text-red-800"
+                              >
                                 {index === 0 && (
                                   <div className="flex items-center justify-center h-full text-center p-4">
                                     <Calendar className="h-5 w-5 mr-2" />
@@ -850,84 +1141,112 @@ export default function Page() {
                                   </div>
                                 )}
                               </td>
-                            )
+                            );
                           }
 
-                          const entries = getEntriesForTimeSlot(day, timeSlot)
+                          const entries = getEntriesForTimeSlot(day, timeSlot);
 
                           // If this time slot is the start of an entry, render it with rowspan
                           if (isStartOfEntry(day, timeSlot)) {
-                            const entry = entries[0]
-                            const rowSpan = calculateRowSpan(entry)
+                            const entry = entries[0];
+                            const rowSpan = calculateRowSpan(entry);
 
-                            let bgClass = ""
-                            let content = null
+                            let bgClass = "";
+                            let content = null;
 
                             if (entry.isBreak) {
-                              bgClass = "bg-gray-100 border-gray-300"
+                              bgClass = "bg-gray-100 border-gray-300";
                               content = (
                                 <>
                                   <div className="font-medium flex items-center">
                                     <Coffee className="h-4 w-4 mr-2" />
                                     Break
                                   </div>
-                                  <div className="text-xs mt-1">{formatTimeRange(entry.startTime, entry.endTime)}</div>
+                                  <div className="text-xs mt-1">
+                                    {formatTimeRange(
+                                      entry.startTime,
+                                      entry.endTime
+                                    )}
+                                  </div>
                                   <div className="text-xs mt-1 text-muted-foreground">
-                                    {formatDuration(calculateDuration(entry.startTime, entry.endTime))}
+                                    {formatDuration(
+                                      calculateDuration(
+                                        entry.startTime,
+                                        entry.endTime
+                                      )
+                                    )}
                                   </div>
                                   <div className="flex gap-1 mt-2">
-                                    <Button variant="ghost" size="sm" onClick={() => editEntry(entry)}>
+                                    {/* <Button variant="ghost" size="sm" onClick={() => editEntry(entry)}>
                                       <Edit className="h-3 w-3 mr-1" />
                                       Edit
-                                    </Button>
+                                    </Button> */}
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       className="text-destructive"
-                                      onClick={() => confirmDeleteEntry(entry.id)}
+                                      onClick={() =>
+                                        confirmDeleteEntry(entry.id)
+                                      }
                                     >
                                       <Trash2 className="h-3 w-3 mr-1" />
                                       Delete
                                     </Button>
                                   </div>
                                 </>
-                              )
+                              );
                             } else if (entry.isFreePeriod) {
-                              bgClass = "bg-gray-50 border-gray-200"
+                              bgClass = "bg-gray-50 border-gray-200";
                               content = (
                                 <>
                                   <div className="font-medium flex items-center">
                                     <Edit className="h-4 w-4 mr-2" />
                                     Free Period
                                   </div>
-                                  <div className="text-xs mt-1">{formatTimeRange(entry.startTime, entry.endTime)}</div>
+                                  <div className="text-xs mt-1">
+                                    {formatTimeRange(
+                                      entry.startTime,
+                                      entry.endTime
+                                    )}
+                                  </div>
                                   <div className="text-xs mt-1 text-muted-foreground">
-                                    {formatDuration(calculateDuration(entry.startTime, entry.endTime))}
+                                    {formatDuration(
+                                      calculateDuration(
+                                        entry.startTime,
+                                        entry.endTime
+                                      )
+                                    )}
                                   </div>
                                   <div className="flex gap-1 mt-2">
-                                    <Button variant="ghost" size="sm" onClick={() => editEntry(entry)}>
+                                    {/* <Button variant="ghost" size="sm" onClick={() => editEntry(entry)}>
                                       <Edit className="h-3 w-3 mr-1" />
                                       Edit
-                                    </Button>
+                                    </Button> */}
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       className="text-destructive"
-                                      onClick={() => confirmDeleteEntry(entry.id)}
+                                      onClick={() =>
+                                        confirmDeleteEntry(entry.id)
+                                      }
                                     >
                                       <Trash2 className="h-3 w-3 mr-1" />
                                       Delete
                                     </Button>
                                   </div>
                                 </>
-                              )
+                              );
                             } else {
-                              bgClass = subjectColors[entry.subjectId!] || "bg-gray-100 border-gray-300"
+                              bgClass =
+                                subjectColors?.[entry.subjectId!] ??
+                                "bg-gray-100 border-gray-300";
 
                               if (entry.classType === "lab") {
                                 content = (
                                   <>
-                                    <div className="font-medium">{getSubjectName(entry.subjectId)}</div>
+                                    <div className="font-medium">
+                                      {getSubjectName(entry.subjectId)}
+                                    </div>
                                     <div className="flex items-center text-xs mt-1">
                                       <Badge
                                         variant="outline"
@@ -935,52 +1254,84 @@ export default function Page() {
                                       >
                                         Lab
                                       </Badge>
-                                      <span>{formatTimeRange(entry.startTime, entry.endTime)}</span>
+                                      <span>
+                                        {formatTimeRange(
+                                          entry.startTime,
+                                          entry.endTime
+                                        )}
+                                      </span>
                                     </div>
                                     <div className="text-xs mt-1 text-muted-foreground">
-                                      {formatDuration(calculateDuration(entry.startTime, entry.endTime))}
+                                      {formatDuration(
+                                        calculateDuration(
+                                          entry.startTime,
+                                          entry.endTime
+                                        )
+                                      )}
                                     </div>
 
-                                    {entry.batches && entry.batches.length > 0 && (
-                                      <div className="mt-2 space-y-1">
-                                        <div className="text-xs font-medium">Batches:</div>
-                                        {entry.batches.map((batch) => (
-                                          <div key={batch.id} className="text-xs p-1 bg-background/50 rounded">
-                                            <div className="font-medium">{batch.name}</div>
-                                            <div className="flex justify-between">
-                                              {batch.subjectId && batch.subjectId !== entry.subjectId && (
-                                                <span className="text-primary">{getSubjectName(batch.subjectId)}</span>
-                                              )}
-                                              {batch.location && (
-                                                <span className="text-muted-foreground">{batch.location}</span>
-                                              )}
-                                            </div>
+                                    {entry.batches &&
+                                      entry.batches.length > 0 && (
+                                        <div className="mt-2 space-y-1">
+                                          <div className="text-xs font-medium">
+                                            Batches:
                                           </div>
-                                        ))}
-                                      </div>
-                                    )}
+                                          {entry.batches.map((batch) => (
+                                            <div
+                                              key={batch.id}
+                                              className="text-xs p-1 bg-background/50 rounded"
+                                            >
+                                              <div className="font-medium">
+                                                {batch.name} (prof.
+                                                {batch.teacher_name})
+                                              </div>
+                                              <div className="flex justify-between">
+                                                {batch.subjectId &&
+                                                  batch.subjectId !==
+                                                    entry.subjectId && (
+                                                    <span className="text-primary">
+                                                      {getSubjectName(
+                                                        batch.subjectId
+                                                      )}
+                                                    </span>
+                                                  )}
+                                                {batch.location && (
+                                                  <span className="text-muted-foreground">
+                                                    {batch.location}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
 
                                     <div className="flex gap-1 mt-2">
-                                      <Button variant="ghost" size="sm" onClick={() => editEntry(entry)}>
+                                      {/* <Button variant="ghost" size="sm" onClick={() => editEntry(entry)}>
                                         <Edit className="h-3 w-3 mr-1" />
                                         Edit
-                                      </Button>
+                                      </Button> */}
                                       <Button
                                         variant="ghost"
                                         size="sm"
                                         className="text-destructive"
-                                        onClick={() => confirmDeleteEntry(entry.id)}
+                                        onClick={() =>
+                                          confirmDeleteEntry(entry.id)
+                                        }
                                       >
                                         <Trash2 className="h-3 w-3 mr-1" />
                                         Delete
                                       </Button>
                                     </div>
                                   </>
-                                )
+                                );
                               } else {
                                 content = (
                                   <>
-                                    <div className="font-medium">{getSubjectName(entry.subjectId)}</div>
+                                    <div className="font-medium">
+                                      {getSubjectName(entry.subjectId)} (prof.
+                                      {entry.teacher_name})
+                                    </div>
                                     <div className="flex items-center text-xs mt-1">
                                       <Badge
                                         variant="outline"
@@ -990,55 +1341,86 @@ export default function Page() {
                                       </Badge>
                                     </div>
                                     <div className="text-xs mt-1">
-                                      {formatTimeRange(entry.startTime, entry.endTime)}
+                                      {formatTimeRange(
+                                        entry.startTime,
+                                        entry.endTime
+                                      )}
                                     </div>
                                     <div className="text-xs mt-1 text-muted-foreground">
-                                      {formatDuration(calculateDuration(entry.startTime, entry.endTime))}
+                                      {formatDuration(
+                                        calculateDuration(
+                                          entry.startTime,
+                                          entry.endTime
+                                        )
+                                      )}
                                     </div>
                                     <div className="flex gap-1 mt-2">
-                                      <Button variant="ghost" size="sm" onClick={() => editEntry(entry)}>
+                                      {/* <Button variant="ghost" size="sm" onClick={() => editEntry(entry)}>
                                         <Edit className="h-3 w-3 mr-1" />
                                         Edit
-                                      </Button>
+                                      </Button> */}
                                       <Button
                                         variant="ghost"
                                         size="sm"
                                         className="text-destructive"
-                                        onClick={() => confirmDeleteEntry(entry.id)}
+                                        onClick={() =>
+                                          confirmDeleteEntry(entry.id)
+                                        }
                                       >
                                         <Trash2 className="h-3 w-3 mr-1" />
                                         Delete
                                       </Button>
                                     </div>
                                   </>
-                                )
+                                );
                               }
                             }
 
                             return (
-                              <td key={`${day}-${timeSlot}`} className="border p-2" rowSpan={rowSpan}>
-                                <div className={`p-2 rounded border ${bgClass}`}>{content}</div>
+                              <td
+                                key={`${day}-${timeSlot}`}
+                                className="border p-2"
+                                rowSpan={rowSpan}
+                              >
+                                <div
+                                  className={`p-2 rounded border ${bgClass}`}
+                                >
+                                  {content}
+                                </div>
                               </td>
-                            )
+                            );
                           }
 
                           // If this time slot is in the middle of an entry, don't render a cell
-                          if (entries.length > 0 && !isStartOfEntry(day, timeSlot)) {
-                            const currentSlotMinutes = timeToMinutes(timeSlot)
+                          if (
+                            entries.length > 0 &&
+                            !isStartOfEntry(day, timeSlot)
+                          ) {
+                            const currentSlotMinutes = timeToMinutes(timeSlot);
                             const shouldSkip = entries.some((entry) => {
-                              const entryStartMinutes = timeToMinutes(entry.startTime)
-                              const entryEndMinutes = timeToMinutes(entry.endTime)
-                              return currentSlotMinutes > entryStartMinutes && currentSlotMinutes < entryEndMinutes
-                            })
+                              const entryStartMinutes = timeToMinutes(
+                                entry.startTime
+                              );
+                              const entryEndMinutes = timeToMinutes(
+                                entry.endTime
+                              );
+                              return (
+                                currentSlotMinutes > entryStartMinutes &&
+                                currentSlotMinutes < entryEndMinutes
+                              );
+                            });
 
                             if (shouldSkip) {
-                              return null // Don't render anything for this cell
+                              return null; // Don't render anything for this cell
                             }
                           }
 
                           // If no entry, render an empty cell with add button
                           return (
-                            <td key={`${day}-${timeSlot}`} className="border p-2">
+                            <td
+                              key={`${day}-${timeSlot}`}
+                              className="border p-2"
+                            >
                               <div className="h-full w-full min-h-[40px] flex items-center justify-center text-muted-foreground text-sm">
                                 <Button
                                   variant="ghost"
@@ -1051,7 +1433,7 @@ export default function Page() {
                                 </Button>
                               </div>
                             </td>
-                          )
+                          );
                         })}
                       </tr>
                     ))}
@@ -1061,12 +1443,13 @@ export default function Page() {
             </CardContent>
             <CardFooter className="flex justify-between">
               <div className="text-sm text-muted-foreground">
-                Total entries: {timetable.length} for {getSemesterName(selectedSemester)}
+                Total entries: {timetable.length} for{" "}
+                {getSemesterName(selectedSemester)}
               </div>
-              <Button onClick={() => openAddDialog()}>
+              {/* <Button onClick={() => openAddDialog()}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Custom Entry
-              </Button>
+              </Button> */}
             </CardFooter>
           </Card>
         </TabsContent>
@@ -1074,16 +1457,20 @@ export default function Page() {
         <TabsContent value="manage" className="mt-0">
           <Card>
             <CardHeader>
-              <CardTitle>Manage Timetable Entries - {getSemesterName(selectedSemester)}</CardTitle>
-              <CardDescription>Add, edit, or remove timetable entries</CardDescription>
+              <CardTitle>
+                Manage Timetable Entries - {getSemesterName(selectedSemester)}
+              </CardTitle>
+              <CardDescription>
+                Add, edit, or remove timetable entries
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <Button onClick={() => openAddDialog()}>
+                  {/* <Button onClick={() => openAddDialog()}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add New Entry
-                  </Button>
+                  </Button> */}
                 </div>
 
                 {timetable.length === 0 ? (
@@ -1091,33 +1478,42 @@ export default function Page() {
                     <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium">No Entries Yet</h3>
                     <p className="text-muted-foreground mt-2">
-                      Start by adding your first timetable entry for {getSemesterName(selectedSemester)}.
+                      Start by adding your first timetable entry for{" "}
+                      {getSemesterName(selectedSemester)}.
                     </p>
                   </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {timetable.map((entry) => {
-                      let borderClass = ""
-                      let title = ""
-                      let description = ""
+                      let borderClass = "";
+                      let title = "";
+                      let description = "";
 
                       if (entry.isBreak) {
-                        borderClass = "border-l-gray-400"
-                        title = "Break"
-                        description = "Break Time"
+                        borderClass = "border-l-gray-400";
+                        title = "Break";
+                        description = "Break Time";
                       } else if (entry.isFreePeriod) {
-                        borderClass = "border-l-gray-300"
-                        title = "Free Period"
-                        description = "Available for scheduling"
+                        borderClass = "border-l-gray-300";
+                        title = "Free Period";
+                        description = "Available for scheduling";
                       } else {
-                        borderClass = `border-l-4 ${subjectColors[entry.subjectId!] || "border-l-gray-300"}`
-                        title = getSubjectName(entry.subjectId)
+                        borderClass = `border-l-4 ${
+                          subjectColors?.[entry.subjectId!] ??
+                          "border-l-gray-300"
+                        }`;
+                        title = getSubjectName(entry.subjectId);
                         description =
-                          entry.classType === "lecture" ? `Lecture - ` : `Lab - ${entry.batches?.length || 0} Batches`
+                          entry.classType === "lecture"
+                            ? `Lecture - Prof. ${entry.teacher_name} `
+                            : `Lab - ${entry.batches?.length || 0} Batches`;
                       }
 
                       return (
-                        <Card key={entry.id} className={`overflow-hidden ${borderClass}`}>
+                        <Card
+                          key={entry.id}
+                          className={`overflow-hidden ${borderClass}`}
+                        >
                           <CardHeader className="p-4">
                             <CardTitle className="text-base">
                               {entry.isBreak ? (
@@ -1142,17 +1538,19 @@ export default function Page() {
                                           : "bg-yellow-50 text-yellow-800 border-yellow-300"
                                       }`}
                                     >
-                                      {entry.classType === "lecture" ? "Lecture" : "Lab"}
+                                      {entry.classType === "lecture"
+                                        ? "Lecture"
+                                        : "Lab"}
                                     </Badge>
                                   )}
                                 </div>
                               )}
                             </CardTitle>
                             <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editEntry(entry)}>
+                              {/* <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editEntry(entry)}>
                                 <Edit className="h-4 w-4" />
                                 <span className="sr-only">Edit</span>
-                              </Button>
+                              </Button> */}
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -1163,7 +1561,9 @@ export default function Page() {
                                 <span className="sr-only">Delete</span>
                               </Button>
                             </div>
-                            <CardDescription className="mt-1">{description}</CardDescription>
+                            <CardDescription className="mt-1">
+                              {description}
+                            </CardDescription>
                           </CardHeader>
                           <CardContent className="p-4 pt-0">
                             <div className="text-sm">
@@ -1173,35 +1573,65 @@ export default function Page() {
                               </div>
                               <div className="flex items-center mb-1">
                                 <span className="font-medium w-20">Time:</span>
-                                <span>{formatTimeRange(entry.startTime, entry.endTime)}</span>
+                                <span>
+                                  {formatTimeRange(
+                                    entry.startTime,
+                                    entry.endTime
+                                  )}
+                                </span>
                               </div>
                               <div className="flex items-center mb-1">
-                                <span className="font-medium w-20">Duration:</span>
-                                <span>{formatDuration(calculateDuration(entry.startTime, entry.endTime))}</span>
+                                <span className="font-medium w-20">
+                                  Duration:
+                                </span>
+                                <span>
+                                  {formatDuration(
+                                    calculateDuration(
+                                      entry.startTime,
+                                      entry.endTime
+                                    )
+                                  )}
+                                </span>
                               </div>
 
-                              {entry.classType === "lab" && entry.batches && entry.batches.length > 0 && (
-                                <div className="mt-2">
-                                  <div className="font-medium mb-1">Batches:</div>
-                                  <div className="space-y-1 pl-2">
-                                    {entry.batches.map((batch) => (
-                                      <div key={batch.id} className="text-xs p-1 bg-muted rounded flex justify-between">
-                                        <span>{batch.name}</span>
-                                        {batch.subjectId && batch.subjectId !== entry.subjectId && (
-                                          <span className="text-primary">{getSubjectName(batch.subjectId)}</span>
-                                        )}
-                                        {batch.location && (
-                                          <span className="text-muted-foreground">{batch.location}</span>
-                                        )}
-                                      </div>
-                                    ))}
+                              {entry.classType === "lab" &&
+                                entry.batches &&
+                                entry.batches.length > 0 && (
+                                  <div className="mt-2">
+                                    <div className="font-medium mb-1">
+                                      Batches:
+                                    </div>
+                                    <div className="space-y-1 pl-2">
+                                      {entry.batches.map((batch) => (
+                                        <div
+                                          key={uuidv4()}
+                                          className="text-xs p-1 bg-muted rounded flex justify-between"
+                                        >
+                                          <span>{batch.name}</span>
+                                          {batch.subjectId &&
+                                            batch.subjectId.toString() !==
+                                              entry.subjectId?.toString() && (
+                                              <span className="text-primary">
+                                                {getSubjectName(
+                                                  batch.subjectId
+                                                )}{" "}
+                                                (Prof.{batch.teacher_name})
+                                              </span>
+                                            )}
+                                          {batch.location && (
+                                            <span className="text-muted-foreground">
+                                              {batch.location}
+                                            </span>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
                             </div>
                           </CardContent>
                         </Card>
-                      )
+                      );
                     })}
                   </div>
                 )}
@@ -1215,7 +1645,9 @@ export default function Page() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Timetable Entry" : "Add Timetable Entry"}</DialogTitle>
+            <DialogTitle>
+              {isEditing ? "Edit Timetable Entry" : "Add Timetable Entry"}
+            </DialogTitle>
             <DialogDescription>
               {isEditing
                 ? "Update the details for this timetable slot."
@@ -1256,7 +1688,9 @@ export default function Page() {
                   id="startTime"
                   type="time"
                   value={currentEntry.startTime || ""}
-                  onChange={(e) => handleInputChange("startTime", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("startTime", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -1286,12 +1720,12 @@ export default function Page() {
                     id="isBreak"
                     checked={Boolean(currentEntry.isBreak)}
                     onCheckedChange={(checked) => {
-                      handleInputChange("isBreak", checked)
+                      handleInputChange("isBreak", checked);
                       if (checked) {
-                        handleInputChange("isFreePeriod", false)
-                        handleInputChange("classType", undefined)
-                        handleInputChange("subjectId", "")
-                        handleInputChange("batches", [])
+                        handleInputChange("isFreePeriod", false);
+                        handleInputChange("classType", undefined);
+                        handleInputChange("subjectId", "");
+                        handleInputChange("batches", []);
                       }
                     }}
                   />
@@ -1303,12 +1737,12 @@ export default function Page() {
                     id="isFreePeriod"
                     checked={Boolean(currentEntry.isFreePeriod)}
                     onCheckedChange={(checked) => {
-                      handleInputChange("isFreePeriod", checked)
+                      handleInputChange("isFreePeriod", checked);
                       if (checked) {
-                        handleInputChange("isBreak", false)
-                        handleInputChange("classType", undefined)
-                        handleInputChange("subjectId", "")
-                        handleInputChange("batches", [])
+                        handleInputChange("isBreak", false);
+                        handleInputChange("classType", undefined);
+                        handleInputChange("subjectId", "");
+                        handleInputChange("batches", []);
                       }
                     }}
                   />
@@ -1327,7 +1761,7 @@ export default function Page() {
                     value={currentEntry.classType || ""}
                     onValueChange={(value) => {
                       // Convert the string value to the proper type
-                      const classType = value as "lecture" | "lab"
+                      const classType = value as "lecture" | "lab";
 
                       // Create a new entry object with updated fields
                       const updatedEntry = {
@@ -1335,15 +1769,23 @@ export default function Page() {
                         classType,
                         // Reset fields based on class type
                         batches:
-                          classType === "lecture" ? [] : currentEntry.batches?.length ? currentEntry.batches : [],
-                      }
+                          classType === "lecture"
+                            ? []
+                            : currentEntry.batches?.length
+                            ? currentEntry.batches
+                            : [],
+                      };
 
                       // Update the entire entry state at once
-                      setCurrentEntry(updatedEntry)
+                      setCurrentEntry(updatedEntry);
 
                       // If it's a lab and there are no batches, add an initial batch after the state update
-                      if (classType === "lab" && (!updatedEntry.batches || updatedEntry.batches.length === 0)) {
-                        setTimeout(addBatch, 0)
+                      if (
+                        classType === "lab" &&
+                        (!updatedEntry.batches ||
+                          updatedEntry.batches.length === 0)
+                      ) {
+                        setTimeout(addBatch, 0);
                       }
                     }}
                   >
@@ -1351,7 +1793,9 @@ export default function Page() {
                       <SelectValue placeholder="Select class type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="lecture">Lecture (All Students)</SelectItem>
+                      <SelectItem value="lecture">
+                        Lecture (All Students)
+                      </SelectItem>
                       <SelectItem value="lab">Lab (Batches)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1366,7 +1810,9 @@ export default function Page() {
                         </Label>
                         <Select
                           value={currentEntry.subjectId || ""}
-                          onValueChange={(value) => handleInputChange("subjectId", value)}
+                          onValueChange={(value) =>
+                            handleInputChange("subjectId", value)
+                          }
                         >
                           <SelectTrigger id="subject" className="col-span-3">
                             <SelectValue placeholder="Select subject" />
@@ -1388,76 +1834,144 @@ export default function Page() {
                   <div className="grid grid-cols-4 gap-4">
                     <Label className="text-right pt-2">Batches</Label>
                     <div className="col-span-3 space-y-4">
-                      {currentEntry.batches && currentEntry.batches.length > 0 ? (
+                      {currentEntry.batches &&
+                      currentEntry.batches.length > 0 ? (
                         <div className="space-y-4">
-                          {currentEntry.batches.map((batch, index) => (
-                            <Card key={batch.id} className="p-4">
-                              <div className="flex justify-between items-center mb-2">
-                                <h4 className="font-medium">{batch.name}</h4>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-destructive"
-                                  onClick={() => removeBatch(index)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="sr-only">Remove batch</span>
-                                </Button>
-                              </div>
-                              <div className="space-y-2">
-                                <div className="grid grid-cols-4 gap-2 items-center">
-                                  <Label htmlFor={`batch-${index}-name`} className="text-right text-xs">
-                                    Name
-                                  </Label>
-                                  <Input
-                                    id={`batch-${index}-name`}
-                                    value={batch.name || ""}
-                                    className="col-span-3"
-                                    onChange={(e) => updateBatchInfo(index, "name", e.target.value)}
-                                  />
-                                </div>
-                                <div className="grid grid-cols-4 gap-2 items-center">
-                                  <Label htmlFor={`batch-${index}-subject`} className="text-right text-xs">
-                                    Subject
-                                  </Label>
-                                  <Select
-                                    value={batch.subjectId || currentEntry.subjectId || ""}
-                                    onValueChange={(value) => updateBatchInfo(index, "subjectId", value)}
+                          {currentEntry.batches?.map(
+                            (batch: BatchInfo, index: number) => (
+                              <Card key={uuidv4()} className="p-4">
+                                <div className="flex justify-between items-center mb-2">
+                                  <h4 className="font-medium">
+                                    Batch {index + 1}
+                                  </h4>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-destructive"
+                                    onClick={() => removeBatch(index)}
                                   >
-                                    <SelectTrigger id={`batch-${index}-subject`} className="col-span-3">
-                                      <SelectValue placeholder="Select subject" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {subjects.map((subject) => (
-                                        <SelectItem key={subject.id} value={subject.id}>
-                                          {subject.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">
+                                      Remove batch
+                                    </span>
+                                  </Button>
                                 </div>
-                                <div className="grid grid-cols-4 gap-2 items-center">
-                                  <Label htmlFor={`batch-${index}-location`} className="text-right text-xs">
-                                    Location
-                                  </Label>
-                                  <Input
-                                    id={`batch-${index}-location`}
-                                    value={batch.location || ""}
-                                    className="col-span-3"
-                                    placeholder="Lab room, etc."
-                                    onChange={(e) => updateBatchInfo(index, "location", e.target.value)}
-                                  />
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-4 gap-2 items-center">
+                                    <Label
+                                      htmlFor={`batch-${index}-select`}
+                                      className="text-right text-xs"
+                                    >
+                                      Select Batch
+                                    </Label>
+                                    <Select
+                                      value={batch.id}
+                                      onValueChange={(value) => {
+                                        const selectedBatch =
+                                          defaultBatches.find(
+                                            (b) =>
+                                              b.id.toString() ===
+                                              value.toString()
+                                          );
+                                        if (selectedBatch) {
+                                          updateBatchInfo(index, "id", value);
+                                          updateBatchInfo(
+                                            index,
+                                            "name",
+                                            selectedBatch.name
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      <SelectTrigger
+                                        id={`batch-${index}-select`}
+                                        className="col-span-3"
+                                      >
+                                        <SelectValue placeholder="Select batch" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {defaultBatches.map((b) => (
+                                          <SelectItem key={b.id} value={b.id}>
+                                            {b.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="grid grid-cols-4 gap-2 items-center">
+                                    <Label
+                                      htmlFor={`batch-${index}-subject`}
+                                      className="text-right text-xs"
+                                    >
+                                      Select Subject
+                                    </Label>
+                                    <Select
+                                      value={batch.subjectId || ""}
+                                      onValueChange={(value) =>
+                                        updateBatchInfo(
+                                          index,
+                                          "subjectId",
+                                          value
+                                        )
+                                      }
+                                    >
+                                      <SelectTrigger
+                                        id={`batch-${index}-subject`}
+                                        className="col-span-3"
+                                      >
+                                        <SelectValue placeholder="Select subject" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {subjects.map((subject) => (
+                                          <SelectItem
+                                            key={subject.id}
+                                            value={subject.id}
+                                          >
+                                            {subject.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="grid grid-cols-4 gap-2 items-center">
+                                    <Label
+                                      htmlFor={`batch-${index}-location`}
+                                      className="text-right text-xs"
+                                    >
+                                      Batch Location
+                                    </Label>
+                                    <Input
+                                      id={`batch-${index}-location`}
+                                      value={batch.location || ""}
+                                      className="col-span-3"
+                                      placeholder="Lab room, etc."
+                                      onChange={(e) =>
+                                        updateBatchInfo(
+                                          index,
+                                          "location",
+                                          e.target.value
+                                        )
+                                      }
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            </Card>
-                          ))}
+                              </Card>
+                            )
+                          )}
                         </div>
                       ) : (
                         <div className="text-center p-4 border rounded-lg bg-muted">
-                          <p className="text-sm text-muted-foreground">No batches added yet</p>
+                          <p className="text-sm text-muted-foreground">
+                            No batches added yet
+                          </p>
                         </div>
                       )}
-                      <Button variant="outline" size="sm" className="w-full" onClick={addBatch}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={addBatch}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Batch
                       </Button>
@@ -1478,11 +1992,18 @@ export default function Page() {
       </Dialog>
 
       {/* Dialog for setting college hours */}
-      <Dialog open={isCollegeHoursDialogOpen} onOpenChange={setIsCollegeHoursDialogOpen}>
+      <Dialog
+        open={isCollegeHoursDialogOpen}
+        onOpenChange={setIsCollegeHoursDialogOpen}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>College Hours - {getSemesterName(selectedSemester)}</DialogTitle>
-            <DialogDescription>Set the start and end times for your college day.</DialogDescription>
+            <DialogTitle>
+              College Hours - {getSemesterName(selectedSemester)}
+            </DialogTitle>
+            <DialogDescription>
+              Set the start and end times for your college day.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -1493,7 +2014,7 @@ export default function Page() {
                 <Input
                   id="collegeStartTime"
                   type="time"
-                  value={collegeHours.startTime}
+                  value={collegeHours ? collegeHours.startTime : ""}
                   onChange={(e) =>
                     setCollegeHoursBySemester({
                       ...collegeHoursBySemester,
@@ -1514,7 +2035,7 @@ export default function Page() {
                 <Input
                   id="collegeEndTime"
                   type="time"
-                  value={collegeHours.endTime}
+                  value={collegeHours ? collegeHours.endTime : ""}
                   onChange={(e) =>
                     setCollegeHoursBySemester({
                       ...collegeHoursBySemester,
@@ -1529,7 +2050,10 @@ export default function Page() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCollegeHoursDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCollegeHoursDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={updateCollegeHours}>Save</Button>
@@ -1541,8 +2065,12 @@ export default function Page() {
       <Dialog open={isHolidayDialogOpen} onOpenChange={setIsHolidayDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Manage Holidays - {getSemesterName(selectedSemester)}</DialogTitle>
-            <DialogDescription>Mark days as holidays to exclude them from the timetable.</DialogDescription>
+            <DialogTitle>
+              Manage Holidays - {getSemesterName(selectedSemester)}
+            </DialogTitle>
+            <DialogDescription>
+              Mark days as holidays to exclude them from the timetable.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {days.map((day) => (
@@ -1566,23 +2094,29 @@ export default function Page() {
       </Dialog>
 
       {/* Confirmation dialog for deleting entries */}
-      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+      <AlertDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the selected timetable entry.
+              This action cannot be undone. This will permanently delete the
+              selected timetable entry.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteEntry} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={deleteEntry}
+              className="bg-destructive text-destructive-foreground"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }
-

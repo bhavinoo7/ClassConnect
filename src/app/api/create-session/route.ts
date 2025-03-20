@@ -1,10 +1,9 @@
-import UserModel from "@/model/User";
 import { Teacher, session } from "@/model/Teacher";
 import { Division } from "@/model/Division";
 import { Attendance } from "@/model/Timetable";
 
 import dbConnection from "@/lib/dbConnection";
-import mongoose, { set } from "mongoose";
+
 import { Batch } from "@/model/Division";
 
 export async function POST(req: Request) {
@@ -13,59 +12,72 @@ export async function POST(req: Request) {
     const {
       start_time,
       end_time,
-      division_id,
+      division,
       teacher_id,
       subject,
       location,
       is_lab,
-      batch_id,
-      subject_id
+      subject_id,
+      lab,
     } = await req.json();
-    console.log(start_time);
-    const data = new Date();
-    const division = await Division.findById(division_id);
-    console.log(division);
 
-    const newsession = new session({
-      start_time,
-      end_time,
-      session_name: subject,
-      location,
-      division_id,
-      session_date: data,
-      teacher: new mongoose.Types.ObjectId(teacher_id),
-      status: "open",
-      subject_id
-    });
-    newsession.teacher = teacher_id;
-    await newsession.save();
+    const data = new Date();
+    const divisions = await Division.findById(division);
+
+    let newsession: any;
+
+    if (is_lab) {
+      newsession = new session({
+        start_time,
+        end_time,
+        session_name: subject,
+        location,
+        division_id: division,
+        session_date: data,
+        teacher: lab.teacher,
+        status: "open",
+        subject_id: lab.subject_id._id,
+      });
+    } else {
+      newsession = new session({
+        start_time,
+        end_time,
+        session_name: subject,
+        location,
+        division_id: division,
+        session_date: data,
+        teacher: teacher_id,
+        status: "open",
+        subject_id: subject_id,
+      });
+    }
+
+    // await newsession.save();
     const teacher = await Teacher.findById(teacher_id);
     teacher.sessions.push(newsession._id);
     teacher.currentent_session = newsession._id;
     await teacher.save();
-    console.log(teacher);
-    console.log(newsession);
+
     if (is_lab) {
-      const batch = await Batch.findById(batch_id);
-      console.log(batch);
+      const batch = await Batch.findById(lab.batch_id);
 
       batch?.students.map(async (student) => {
         const attendance = await new Attendance({
           student_id: student,
         });
-        await attendance.save();
+        newsession.Attendance.push(attendance._id);
+        attendance.save();
       });
     } else {
-      division?.students.map(async (student) => {
+      divisions?.students.map(async (student: any) => {
         const attendance = await new Attendance({
           student_id: student,
         });
         attendance.save();
         newsession.Attendance.push(attendance._id);
-        
       });
-      newsession.save();
     }
+    await newsession.save();
     return Response.json({
       success: true,
       message: "Session Created Successfully",

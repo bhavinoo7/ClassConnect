@@ -4,9 +4,8 @@ export interface Division extends Document {
   division_name: string;
   division_code: string;
   mentor: Array<mongoose.Schema.Types.ObjectId>;
-
+  request: Array<mongoose.Schema.Types.ObjectId>;
   timestamp: Date;
-
   hodid: mongoose.Schema.Types.ObjectId;
   subjects: Array<mongoose.Schema.Types.ObjectId>;
   students: Array<mongoose.Schema.Types.ObjectId>;
@@ -230,6 +229,14 @@ const DivisionSchema: Schema<Division> = new Schema({
       default: null,
     },
   ],
+  request: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
+      default: null,
+    },
+  ],
+
   department: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Department",

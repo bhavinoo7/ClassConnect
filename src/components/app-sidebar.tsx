@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useEffect } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "./ui/sidebar";
 import { TeacherAttedanceActions } from "@/store/slice/teacherattendance";
+import { NotificationActions } from "@/store/slice/notification";
+import { timeTableActions } from "@/store/slice/timetable";
 import {
   IconArrowLeft,
   IconBrandTabler,
@@ -51,13 +53,6 @@ export function SidebarDemo({ children }: any) {
       ),
     },
     {
-      label: "Settings",
-      href: "#",
-      icon: (
-        <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
       label: "Logout",
       href: `logout`,
       icon: (
@@ -77,13 +72,6 @@ export function SidebarDemo({ children }: any) {
       href: `/${currentUrl.split("/")[3]}/profile`,
       icon: (
         <IconUserBolt className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Settings",
-      href: "#",
-      icon: (
-        <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -117,6 +105,12 @@ export function SidebarDemo({ children }: any) {
                       dispatch(userActions.logout());
                       dispatch(TeacherAttedanceActions.removeTeacherAttendance());
                       dispatch(userActions.removereport());
+                      dispatch(NotificationActions.removeNotification());
+                      dispatch(NotificationActions.removeUnread());
+                      dispatch(timeTableActions.deletedivisionid());
+                      dispatch(timeTableActions.removetimetable());
+                      dispatch(timeTableActions.removesem())
+                      dispatch(userActions.outmySession());
                       signOut();
                     } else {
                       if (link.href) {

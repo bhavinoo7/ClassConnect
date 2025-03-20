@@ -1,20 +1,21 @@
 import dbConnection from "@/lib/dbConnection";
-import { Reports,Semester } from "@/model/Division";
+import { Division, Reports, Semester } from "@/model/Division";
 import Student from "@/model/Student";
+
 import mongoose from "mongoose";
-import { start } from "repl";
 
 export async function GET(req: Request) {
   await dbConnection();
   try {
     const url = new URL(req.url);
     const studentid = url.searchParams.get("studentid");
-    console.log(studentid);
 
     if (!studentid) {
       throw new Error("studentid is required");
     }
-    const students = await Student.findById(new mongoose.Types.ObjectId(studentid)).populate({
+    const students = await Student.findById(
+      new mongoose.Types.ObjectId(studentid)
+    ).populate({
       path: "report",
       model: Reports,
       populate: {
@@ -22,16 +23,16 @@ export async function GET(req: Request) {
         model: Semester,
       },
     });
+    const div = await Division.findById(students?.division);
 
-    console.log(students);
     const sem = students?.report.map((s: any) => {
-      return{
+      return {
         Semester_name: s.semester.semester_name,
         Semester_id: s.semester._id,
         start_date: s.semester.start_date,
         end_date: s.semester.end_date,
-      }
-      
+        current: s.semester._id === div?.current_semester ? "True" : "False",
+      };
     });
     return Response.json(
       {
@@ -40,7 +41,6 @@ export async function GET(req: Request) {
       },
       { status: 200 }
     );
-    
   } catch (err) {
     console.error("Error occurred in Fetch Semester", err);
     return Response.json(

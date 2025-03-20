@@ -14,8 +14,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -56,9 +54,9 @@ import { useAppDispatch } from "@/hooks/hooks";
 import { Progress } from "@/components/ui/progress";
 import axios from "axios";
 import { useAppSelector } from "@/hooks/hooks";
-import { sub } from "date-fns";
+
 import { useRouter } from "next/navigation";
-import { set } from "mongoose";
+
 export default function Page() {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -76,7 +74,7 @@ export default function Page() {
   const [subjects, setSubjects] = useState<any>([]);
   const [selectedSemester, setSelectedSemester] = useState<string>("");
   const [attendance, setAttendance] = useState<any>([]);
-  const [totala,setTotala]=useState<any>([]);
+  const [totala, setTotala] = useState<any>([]);
   const calculateSemesterInfo = (
     startDateStr: string,
     endDateStr: string,
@@ -126,33 +124,23 @@ export default function Page() {
     return acc;
   }, {});
 
-  console.log(semesters);
 
-  // Mock data with better structure
 
-  // Generate weekly data for a subject
-  // const generateWeeklyData = (totalWeeks: number) => {
-  //   return Array.from({ length: totalWeeks }, (_, i) => ({
-  //     week: `Week ${i + 1}`,
-  //     attendance: Math.random() > 0.2 ? 100 : 0,
-  //   }));
-  // };
   const generateWeeklyData = (
     semesterStartDate: string,
-    semesterEndDate: string,
- // Array of present dates
+    semesterEndDate: string
+    // Array of present dates
   ) => {
-    
     const startDate = new Date(semesterStartDate);
     const endDate = new Date(semesterEndDate);
     const weeklyAttendance: { week: string; attendance: number }[] = [];
-  
+
     let currentWeekStart = new Date(startDate); // First week's start
     let weekIndex = 1;
-  
+
     while (currentWeekStart <= endDate) {
       let currentWeekEnd = new Date(currentWeekStart);
-  
+
       if (weekIndex === 1) {
         // If first week starts on a weekday, end it on Saturday
         const startDay = currentWeekStart.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
@@ -162,40 +150,43 @@ export default function Page() {
         // Normal week (Monday–Sunday)
         currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
       }
-  
+
       // Ensure week doesn't extend beyond semester end
       if (currentWeekEnd > endDate) {
         currentWeekEnd = new Date(endDate);
       }
-  
+
       // Count present days within this week
       const presentCount = attendance.filter((dateStr: string) => {
         const recordDate = new Date(dateStr);
         return recordDate >= currentWeekStart && recordDate <= currentWeekEnd;
       }).length;
-  
+
       // Expected sessions (5 per full week, adjust for first short week)
       let expectedSessions = 5;
       if (weekIndex === 1) {
-        expectedSessions = Math.min(5, currentWeekEnd.getDate() - currentWeekStart.getDate() + 1); // Adjust for short first week
+        expectedSessions = Math.min(
+          5,
+          currentWeekEnd.getDate() - currentWeekStart.getDate() + 1
+        ); // Adjust for short first week
       }
-  
+
       const percentage = (presentCount / expectedSessions) * 100;
       weeklyAttendance.push({
         week: `Week ${weekIndex}`,
         attendance: Math.min(Math.round(percentage), 100), // Ensure max 100%
       });
-  
+
       // Move to the next week: If first week is short, start next week on Monday
       if (weekIndex === 1) {
         currentWeekStart.setDate(currentWeekEnd.getDate() + 2); // Start on Monday
       } else {
         currentWeekStart.setDate(currentWeekStart.getDate() + 7);
       }
-  
+
       weekIndex++;
     }
-  
+
     return weeklyAttendance;
   };
 
@@ -205,10 +196,10 @@ export default function Page() {
     semesterEndDate: string
   ) => {
     const startDate = new Date(semesterStartDate);
-    console.log(startDate);
+    
 
     const endDate = new Date(semesterEndDate);
-    console.log(endDate);
+    
     const monthlyAttendance: { month: string; attendance: number }[] = [];
 
     let tempDate = new Date(startDate);
@@ -235,7 +226,7 @@ export default function Page() {
 
       tempDate.setMonth(tempDate.getMonth() + 1);
     }
-    console.log(monthlyAttendance);
+    
 
     return monthlyAttendance;
   };
@@ -262,44 +253,30 @@ export default function Page() {
           };
           setWeeklyData(s.weeklyData);
           setMonthlyData(s.monthlyData);
-          console.log(s);
+         
           setSubjects((prev: any) => [...prev, s]);
-          console.log(subjects);
+         
           router.refresh();
         });
       }
       subjectmap();
     }
   }, [subject]);
-  console.log(subjects);
-  // Mock data for subjects with semester structure
-  // const subjects = [
-  //   {
-  //     id: 1,
-  //     name: "Mathematics",
-  //     attended: 42,
-  //     total: 45,
-  //     schedule: "Mon, Wed, Fri",
-  //     instructor: "Dr. Smith",
-  //     weeklyData: generateWeeklyData(16),
-  //     // monthlyData: generateMonthlyData(semesters[selectedSemester].months),
-  //   },
+  
+  
 
-
-  const [sub,setsub]=useState<string>("");
+  const [sub, setsub] = useState<string>("");
 
   const [timeframe, setTimeframe] = useState("week");
   const [selectedSubject, setSelectedSubject] = useState<string>("1");
   const { studentid } = useAppSelector((state) => state.user);
   const [totalAttendance, setTotalAttendance] = useState(0);
-  
+
   const [totalpercentage, setTotalPercentage] = useState(0);
   const [today, setToday]: any[] = useState([]);
-  const [sa,setsa]=useState<any>([]);
-  console.log(selectedSemester);
-  console.log(studentid);
+  const [sa, setsa] = useState<any>([]);
+ 
   useEffect(() => {
-
     if (!selectedSemester) return;
     async function fetchreport() {
       const semesterObj = sem.find(
@@ -307,11 +284,11 @@ export default function Page() {
       );
       const semester_id = semesterObj ? semesterObj.Semester_id : null;
 
-      console.log("Semester id", semester_id);
+     
       const response = await axios.get(
         `/api/fetch-report?studentid=${studentid}&semester=${semester_id}`
       );
-      console.log(response.data.data);
+     
       const re = response.data.data[0].subjects;
       setsa(re);
       dispatch(userActions.fetchreport(response.data.data[0].subjects));
@@ -320,13 +297,10 @@ export default function Page() {
         r.attendance.map((a: any) => {
           if (a.status === "Present") {
             setAttendance((prev: any) => [...prev, a.date]);
-
           }
-          setTotala((prev:any)=>[...prev,a.date]);
+          setTotala((prev: any) => [...prev, a.date]);
           if (a.date === new Date().toISOString().split("T")[0]) {
-            console.log(a.date);
-            console.log(new Date().toISOString().split("T")[0]);
-            console.log("Present");
+            
             a.subject = r.subject_name;
             setToday((prev: any[]) => [...prev, a]);
           }
@@ -342,23 +316,30 @@ export default function Page() {
   }, [selectedSemester]);
 
   useEffect(() => {
-    if(sub.length>0){
+    if (sub.length > 0) {
       router.replace(`/student-dashboard/${sub}`);
     }
-  }),[sub];
-  console.log(attendance);
+  }),
+    [sub];
+ 
   useEffect(() => {
     async function fetchsemster() {
       const response = await axios.get(
         "/api/fetch-semester?studentid=" + studentid
       );
-      console.log(response.data.data);
+      
       setSem(response.data.data);
+      response.data.data.map((s: any) => {
+        if (s.current) {
+          setSelectedSemester(s.Semester_name);
+        }
+      });
+      
     }
     fetchsemster();
   }, []);
-  
-  console.log(sem);
+
+
   const semesterInfo = semesters[selectedSemester as keyof typeof semesters];
   const semesterProgress = semesterInfo
     ? (semesterInfo.currentWeek / semesterInfo.totalWeeks) * 100
@@ -385,9 +366,7 @@ export default function Page() {
   };
 
   const renderChart = () => {
-    
-    const data =
-      timeframe === "week" ? weeklyData : monthlyData;
+    const data = timeframe === "week" ? weeklyData : monthlyData;
 
     return (
       <ChartContainer
@@ -541,19 +520,19 @@ export default function Page() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Semester Information</CardTitle>
           {subjects.length > 0 && (
-          <Select onValueChange={(value) => setsub(value)}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Subject Wise Attendance" />
-            </SelectTrigger>
-            <SelectContent>
-             { subjects.map((subject: any) => (  
-              <SelectItem key={subject.id} value={subject.id}>
-                {subject.name}
-              </SelectItem>
-              ))}
-
-            </SelectContent>
-          </Select>)}
+            <Select onValueChange={(value) => setsub(value)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Subject Wise Attendance" />
+              </SelectTrigger>
+              <SelectContent>
+                {subjects.map((subject: any) => (
+                  <SelectItem key={subject.id} value={subject.id}>
+                    {subject.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -607,7 +586,7 @@ export default function Page() {
                   <span
                     className={`text-sm font-bold ${getAttendanceColor(attendancePercentage)}`}
                   >
-                    {attendancePercentage?attendancePercentage:0}%
+                    {attendancePercentage ? attendancePercentage : 0}%
                   </span>
                 </CardHeader>
                 <CardContent>

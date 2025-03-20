@@ -1,6 +1,5 @@
 import { Teacher } from "@/model/Teacher";
-import exp from "constants";
-import { z } from "zod";
+
 import dbConnection from "@/lib/dbConnection";
 
 export async function GET(req: Request) {
@@ -24,7 +23,6 @@ export async function GET(req: Request) {
         },
       },
     ]);
-    console.log(Teachers);
 
     return Response.json({
       success: true,

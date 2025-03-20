@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 export function StudentAttendance({ session_id }: any) {
   const {teacherid}=useAppSelector((state)=>state.user);
   const {toast}=useToast();
+  console.log(session_id);
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
@@ -118,6 +119,8 @@ export function StudentAttendance({ session_id }: any) {
           video_url: data.secure_url,
         });
         console.log(response);
+        console.log("NDJJDJDDDDDDDDDDDDDDDDDDDDJ");
+        
        
         if (response.data.message === "Face recognition completed") {
           toast({

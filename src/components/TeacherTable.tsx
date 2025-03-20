@@ -8,17 +8,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AnimatedModalDemo } from "./AnimatedModalDemo";
+
+
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const TeacherTable = ({ children }: any) => {
-  console.log(children);
+ 
   return (
     <>
       <Table>
-        <TableCaption>A list of your recent invoices.</TableCaption>
+        <TableCaption>A list of your recent Session.</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">Session Name</TableHead>
+            <TableHead className="w-[100px]">Session Type</TableHead>
             <TableHead>Time</TableHead>
             <TableHead>Division</TableHead>
             <TableHead className="text-right">Status</TableHead>
@@ -28,9 +33,12 @@ const TeacherTable = ({ children }: any) => {
           {children
             ? children.map((slot: any) => {
                 return (
-                  <TableRow key={slot._id}>
+                  <TableRow key={uuidv4()}>
                     <TableCell className="font-medium">
                       {slot.subject}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {slot.is_lab ? "Lab" : "Lecture"}
                     </TableCell>
                     <TableCell>
                       {slot.start_time} To {slot.end_time}

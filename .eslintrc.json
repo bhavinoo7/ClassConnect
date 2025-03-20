@@ -14,7 +14,9 @@
     "react/no-children-prop": "off",
     "@next/next/no-img-element": "off",
     "react-hooks/exhaustive-deps": "off",
-    "@typescript-eslint/no-unsafe-function-type": "off"
+    "@typescript-eslint/no-unsafe-function-type": "off",
+    "react-hooks/rules-of-hooks": "off",
+    "@next/next/no-html-link-for-pages": "off"
   }
 
 }

@@ -11,7 +11,7 @@ const teacherattendanceSlice = createSlice({
             state.Subjects = action.payload;
         },
         removeTeacherAttendance: (state) => {
-            console.log("removeTeacherAttendance");
+           
             state.Subjects = [];
         }
     },

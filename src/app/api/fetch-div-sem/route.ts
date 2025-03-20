@@ -6,19 +6,20 @@ export async function GET(req: Request) {
     await dbConnection();
     const url = new URL(req.url);
     const semester_id = url.searchParams.get("semester_id");
-    console.log(semester_id);
+
     if (semester_id) {
       const sem = await Semester.findById(
         new mongoose.Types.ObjectId(semester_id)
       );
-      console.log(sem);
 
-      const data =[ {
-        Semester_id: sem?._id,
-        Semester_name: sem?.semester_code,
-        start_date: sem?.start_date,
-        end_date: sem?.end_date,
-      }];
+      const data = [
+        {
+          Semester_id: sem?._id,
+          Semester_name: sem?.semester_code,
+          start_date: sem?.start_date,
+          end_date: sem?.end_date,
+        },
+      ];
       return Response.json({
         success: true,
         data: data,

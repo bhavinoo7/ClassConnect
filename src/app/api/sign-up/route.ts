@@ -1,8 +1,8 @@
 import dbConnection from "../../../lib/dbConnection";
-import { ApiResponse } from "@/types/ApiResponse";
+
 import UserModel from "@/model/User";
 import { sendVerificationEmail } from "@/helpers/sendVerificationEmail";
-import { resourceUsage } from "process";
+
 import bcrypt from "bcryptjs";
 export async function POST(req: Request) {
   await dbConnection();

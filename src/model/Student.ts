@@ -13,6 +13,8 @@ export interface Student extends Document {
   userid: mongoose.Schema.Types.ObjectId;
   report: Array<mongoose.Schema.Types.ObjectId>;
   ismodel: boolean;
+  notification: Array<mongoose.Schema.Types.ObjectId>;  
+
 }
 
 export interface StudentReport extends Document {
@@ -90,6 +92,13 @@ const StudentSchema: Schema<Student> = new Schema({
       default: null,
     },
   ],
+  notification:[
+    {
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"Notification",
+      default:null
+    }
+  ]
 });
 
 export const studentReportSchema: Schema<StudentReport> = new Schema({

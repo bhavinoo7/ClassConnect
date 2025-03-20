@@ -6,11 +6,11 @@ export async function GET(req: Request) {
   await dbConnection();
   try{
   const departments = await Department.find({});
-  console.log(departments);
+  
   const depart=departments.map((d)=>{
     return {name:d.department_name,id:d._id}
   })
-  console.log(depart);
+  
   return Response.json({
     success:true,
     data:depart

@@ -21,9 +21,11 @@ import Link from "next/link";
 import React from "react";
 
 import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/hooks/hooks";
 
 const Page = () => {
   const { toast } = useToast();
+  const { userType } = useAppSelector((state) => state.user);
   const router = useRouter();
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -35,14 +37,12 @@ const Page = () => {
     },
   });
   const onsubmit = async (data: z.infer<typeof signInSchema>) => {
-    console.log(data);
-
     const result = await signIn("credential", {
       identifier: data.identifier,
       password: data.password,
       redirect: false,
     });
-    console.log(result);
+
     if (result?.error) {
       if (result.error === "CredentialsSignin") {
         toast({
@@ -60,8 +60,7 @@ const Page = () => {
     }
     if (result?.url) {
       localStorage?.setItem("status", "login");
-
-      router.replace("/");
+      
     }
   };
   return (

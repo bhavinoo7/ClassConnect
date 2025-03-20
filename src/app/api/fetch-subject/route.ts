@@ -1,7 +1,7 @@
 import dbConnection from "@/lib/dbConnection";
 import { Teacher } from "@/model/Teacher";
 import { DivisionAttendance, Subject } from "@/model/Division";
-import mongoose, { model } from "mongoose";
+import mongoose from "mongoose";
 import Student from "@/model/Student";
 import { Attendance } from "@/model/Timetable";
 export async function GET(req: Request) {
@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const teacherid = url.searchParams.get("teacherid");
-    console.log(teacherid);
+
     if (!teacherid) {
       return Response.json(
         {
@@ -46,7 +46,6 @@ export async function GET(req: Request) {
 
         return teacher;
       });
-    console.log(teacher.subject);
 
     return Response.json({
       success: true,

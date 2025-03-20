@@ -26,7 +26,7 @@ export async function GET(req: Request) {
         { status: 400 }
       );
     }
-    console.log(result);
+   
     const { username } = result.data;
     const userNameExist = await UserModel.findOne({
       userName: username,

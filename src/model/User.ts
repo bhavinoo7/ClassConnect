@@ -19,6 +19,7 @@ export interface User extends Document {
   qemail:string;
   hodid:mongoose.Schema.Types.ObjectId;
   isdivisonmentor:boolean;
+  isaccepted:boolean;
 }
 
 const UserSchema: Schema<User> = new Schema({
@@ -69,6 +70,10 @@ const UserSchema: Schema<User> = new Schema({
     },
   teacherid: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher",default:null },
   hodid: { type: mongoose.Schema.Types.ObjectId, ref: "Hod",default:null },
+  isaccepted:{
+    type:Boolean,
+    default:false
+  },
 });
 
 const UserModel =

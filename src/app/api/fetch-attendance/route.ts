@@ -18,7 +18,6 @@ export async function POST(req: Request) {
   try {
     const { session_id, recognize } = await req.json();
 
-    console.log(recognize);
     const sessi = await session.findById(session_id);
     if (!sessi) {
       return Response.json(
@@ -31,24 +30,23 @@ export async function POST(req: Request) {
     }
 
     const rs = recognize.map((r: any) => r.student_id);
-    console.log(rs);
 
     let students: any[] = [];
 
     await Promise.all(
       sessi.Attendance.map(async (attendanceId: any) => {
-        console.log(attendanceId);
-        let attendanc = await Attendance.findById(attendanceId).populate({path:"student_id",model:Student});
-        console.log(attendanc);
+        let attendanc = await Attendance.findById(attendanceId).populate({
+          path: "student_id",
+          model: Student,
+        });
 
         if (!attendanc) return;
 
         if (rs.includes((attendanc.student_id as any)._id.toString())) {
-          console.log("Present");
-
           if (attendanc.status === "Not marked") {
             const recognizedStudent = recognize.find(
-              (r: any) => r.student_id === (attendanc.student_id as any)._id.toString()
+              (r: any) =>
+                r.student_id === (attendanc.student_id as any)._id.toString()
             );
 
             if (recognizedStudent) {
@@ -67,10 +65,6 @@ export async function POST(req: Request) {
         }
       })
     );
-
-    
-    console.log("AA", students);
-    console.log(sessi);
 
     return Response.json(
       {

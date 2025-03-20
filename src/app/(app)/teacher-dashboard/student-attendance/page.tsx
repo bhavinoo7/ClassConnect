@@ -27,33 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useAppSelector } from "@/hooks/hooks";
-import { id } from "date-fns/locale";
-// Mock data for subjects
-// const subjects = [
-//   { id: "math101", name: "Mathematics 101" },
-//   { id: "phys101", name: "Physics 101" },
-//   { id: "chem101", name: "Chemistry 101" },
-//   { id: "bio101", name: "Biology 101" },
-//   { id: "cs101", name: "Computer Science 101" },
-// ];
 
-// Mock data for sessions
-const sessionData = {
-  math101: { totalSessions: 24, completedSessions: 18, attendanceRate: "75%" },
-  phys101: { totalSessions: 20, completedSessions: 15, attendanceRate: "82%" },
-  chem101: { totalSessions: 22, completedSessions: 20, attendanceRate: "91%" },
-  bio101: { totalSessions: 18, completedSessions: 16, attendanceRate: "88%" },
-  cs101: { totalSessions: 30, completedSessions: 28, attendanceRate: "93%" },
-};
+import { useAppSelector } from "@/hooks/hooks";
 
 export default function Page() {
   const { toast } = useToast();
@@ -94,14 +69,10 @@ export default function Page() {
     const response = await axios.get(
       `/api/fetch-subject?teacherid=${teacherid}`
     );
-    console.log(response.data.data);
-    console.log(teacherid);
-    console.log(response.data);
+
     setSubjects(response.data.data);
-    dispatch(
-      TeacherAttedanceActions.setTeacherAttendance(response.data.data)
-    );
-    console.log(subject);
+    dispatch(TeacherAttedanceActions.setTeacherAttendance(response.data.data));
+
     return response.data;
   }
 
@@ -206,7 +177,6 @@ export default function Page() {
                   </Card>
                 </div>
 
-                
                 <div className="flex justify-end">
                   <Link href={`student-attendance/${selectedSubject}`}>
                     <Button>

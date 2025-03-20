@@ -20,14 +20,11 @@ import { useEffect } from "react";
 import axios, { AxiosError } from "axios";
 import { ApiResponse, division } from "@/types/ApiResponse";
 import { useRouter } from "next/navigation";
-import { StudentDetailSchema } from "@/schemas/StudentDetailsSchema";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import z from "zod";
+
 import { useDebounceCallback } from "usehooks-ts";
 import { useAppDispatch } from "@/hooks/hooks";
 import { userActions } from "@/store/slice/user";
-import { Sign } from "crypto";
+
 
 const Student_details_form = () => {
   

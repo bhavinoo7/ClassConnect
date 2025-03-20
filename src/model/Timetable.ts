@@ -1,24 +1,25 @@
+import { id } from "date-fns/locale";
 import mongoose, { Schema, Document } from "mongoose";
-import { number } from "zod";
+import { boolean, number, string } from "zod";
 
 // Slot interface for a single time slot
 export interface Slot {
-  division_id: mongoose.Schema.Types.ObjectId; // Reference to Division
+  semester_id: mongoose.Schema.Types.ObjectId; // Reference to Division
   slot_number: number; // Slot number (1, 2, 3, etc.)
   start_time: string; // e.g., "09:00 AM"
   end_time: string; // e.g., "09:50 AM" or "10:50 AM" for merged slots
   subject: string; // Reference to Subject (optional for breaks)
   subject_id?: mongoose.Schema.Types.ObjectId;
-  teacher?: mongoose.Schema.Types.ObjectId; // Reference to Teacher // Reference to Classroom/Lab (optional for breaks)
+  teacher?: mongoose.Schema.Types.ObjectId;
+  teacher_name:string; // Reference to Teacher // Reference to Classroom/Lab
   is_lab: boolean; // True if it's a lab session
-  merged_slots?: string;
   lab?: Array<mongoose.Schema.Types.ObjectId>;
-  iscompleted: boolean; // Example: "1-2", "3-4", "5-6" for labs
+  day_name: string;
 }
 
 export interface Attendance {
   student_id: mongoose.Schema.Types.ObjectId;
-  
+
   time: Date;
   date: Date;
   vote: number;
@@ -28,19 +29,14 @@ export interface Attendance {
 
 // Day interface for a single day's schedule
 export interface DaySchedule {
+  day_name: string;
+  isholiday: boolean;
   slots: Array<mongoose.Schema.Types.ObjectId>; // Array of slots (6 slots per day, with merged slots for labs)
 }
 
 // Weekly timetable interface
 export interface WeeklySchedule {
-  days: {
-    Monday: Array<mongoose.Schema.Types.ObjectId>;
-    Tuesday: Array<mongoose.Schema.Types.ObjectId>;
-    Wednesday: Array<mongoose.Schema.Types.ObjectId>;
-    Thursday: Array<mongoose.Schema.Types.ObjectId>;
-    Friday: Array<mongoose.Schema.Types.ObjectId>;
-    Saturday: Array<mongoose.Schema.Types.ObjectId>;
-  };
+  days: Array<mongoose.Schema.Types.ObjectId>;
 }
 
 // Timetable document interface
@@ -53,8 +49,10 @@ export interface TimeTable extends Document {
 
 export interface LabSlot extends Document {
   batch_id: mongoose.Schema.Types.ObjectId;
-  subject: string;
+  subject_id: mongoose.Schema.Types.ObjectId;
   teacher: mongoose.Schema.Types.ObjectId;
+  teacher_name:string;
+  lab_location:string;
 }
 
 const LabSlotSchema: Schema<LabSlot> = new Schema({
@@ -63,39 +61,61 @@ const LabSlotSchema: Schema<LabSlot> = new Schema({
     ref: "Batch",
     required: true,
   },
-  subject: {
-    type: String,
-    required: true,
+  subject_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject",
+    default: null,
   },
   teacher: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Teacher",
     required: true,
   },
+  teacher_name:{
+    type:String,
+    default:null
+  },
+  lab_location:{
+    type:String,
+    default:null
+  }
 });
 // Slot schema for a single time slot
 const SlotSchema = new Schema<Slot>({
-  division_id: {
+  semester_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Division",
+    ref: "Semester",
+    required: true,
+  },
+  day_name: {
+    type: String,
     required: true,
   },
   subject_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subject",
-    required: true,
+    default:null
   },
-  slot_number: { type: Number, required: true }, // 1 to 6
+  slot_number: { type: Number, default:1 }, // 1 to 6
   start_time: { type: String, required: true }, // Start time of the slot
   end_time: { type: String, required: true }, // End time of the slot
-  subject: { type: String, required: true }, // Optional for free slots
-  teacher: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+  teacher: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Teacher",
+    default: null,
+  },
+  teacher_name:{
+    type:String,
+    default:null
+  },
   is_lab: { type: Boolean, default: false }, // Indicates if the slot is a lab session
-  merged_slots: { type: String },
-  lab: [LabSlotSchema],
-  iscompleted: { type: Boolean, default: false },
-
-  // Example: "1-2", "3-4", "5-6"
+  lab: [
+    {
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"LabSlot",
+      default:null
+    }
+  ],
 });
 
 const AttendanceSchema = new Schema<Attendance>({
@@ -104,10 +124,9 @@ const AttendanceSchema = new Schema<Attendance>({
     ref: "Student",
     required: true,
   },
-  
+
   date: {
     type: Date,
-
     default: null,
   },
   time: {
@@ -130,45 +149,22 @@ const AttendanceSchema = new Schema<Attendance>({
 
 // Day schema for a single day
 const DayScheduleSchema = new Schema<DaySchedule>({
-  slots: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "Slot", required: true },
-  ], // Array of slots
+  slots: [{ type: mongoose.Schema.Types.ObjectId, ref: "Slot", default: null }],
+  day_name: {
+    type: String,
+    default: null,
+  },
+  isholiday: {
+    type: Boolean,
+    default: false,
+  }, // Array of slots
 });
 
 // Weekly timetable schema
 const WeeklyScheduleSchema = new Schema<WeeklySchedule>({
-  days: {
-    Monday: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DaySchedule",
-      required: true,
-    },
-    Tuesday: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DaySchedule",
-      required: true,
-    },
-    Wednesday: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DaySchedule",
-      required: true,
-    },
-    Thursday: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DaySchedule",
-      required: true,
-    },
-    Friday: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DaySchedule",
-      required: true,
-    },
-    Saturday: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DaySchedule",
-      required: true,
-    },
-  },
+  days: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "DaySchedule", default: null },
+  ],
 });
 
 // Timetable schema
