@@ -60,7 +60,7 @@ const Page = () => {
     }
     if (result?.url) {
       localStorage?.setItem("status", "login");
-      
+      router.replace("/");
     }
   };
   return (

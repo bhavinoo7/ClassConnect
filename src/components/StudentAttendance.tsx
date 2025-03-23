@@ -115,7 +115,7 @@ export function StudentAttendance({ session_id }: any) {
       if (data.secure_url) {
         setCloudinaryUrl(data.secure_url);
         setSubmitting(false);
-        const response = await axios.post("http://localhost:8000/recognize", {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_PY_NGROK}/recognize`, {
           video_url: data.secure_url,
         });
         console.log(response);

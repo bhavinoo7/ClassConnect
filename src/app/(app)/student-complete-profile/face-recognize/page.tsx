@@ -51,14 +51,12 @@ export default function Page() {
       const formData = new FormData();
       formData.append("video", blob, `${step}.webm`);
 
-      const response = await fetch(`http://localhost:8000/analyze/${step}`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_PY_NGROK}/analyze/${step}`,formData
+      );
 
-      const result = await response.json();
+      const result = await response.data();
     
-      if (!result.success) {
+      if (!result.data.success) {
         setInstruction(`Please correctly align your face (${step}) and retry.`);
         return;
       }
@@ -74,7 +72,7 @@ export default function Page() {
         const formData = new FormData();
         formData.append("student_id", student || "");
         formData.append("student_name", studentname || "");
-        const response=await axios.post("http://localhost:8000/train",formData);
+        const response=await axios.post(`${process.env.NEXT_PUBLIC_PY_NGROK}/train`,formData);
         const result = await response.data;
         if(result.message=="Training completed!")
         {

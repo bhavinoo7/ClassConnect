@@ -24,7 +24,7 @@ const SetRedux = () => {
             teacherid: session.user.teacherid,
           })
         );
-        router.replace("/teacher-dashboard");
+        
       }
       if (session.user.usertype === "STUDENT") {
         dispatch(
@@ -36,7 +36,7 @@ const SetRedux = () => {
             studentid: session.user.studentid,
           })
         );
-        router.replace("/student-dashboard");
+        
       }
       if (session.user.usertype === "HOD") {
         dispatch(
@@ -48,7 +48,7 @@ const SetRedux = () => {
             hodid: session.user.hodid,
           })
         );
-        router.replace("/hod-dash");
+        
       }
     } else {
       dispatch(userActions.logout());
