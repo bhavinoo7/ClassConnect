@@ -51,12 +51,14 @@ export default function Page() {
       const formData = new FormData();
       formData.append("video", blob, `${step}.webm`);
 
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_PY_NGROK}/analyze/${step}`,formData
-      );
+      const response = await fetch(`${process.env.NEXT_PUBLIC_PY_NGROK}/analyze/${step}`, {
+        method: "POST",
+        body: formData,
+      });
 
-      const result = await response.data();
+      const result = await response.json();
     
-      if (!result.data.success) {
+      if (!result.success) {
         setInstruction(`Please correctly align your face (${step}) and retry.`);
         return;
       }
