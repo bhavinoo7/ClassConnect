@@ -66,6 +66,7 @@ export const authOptions: NextAuthOptions = {
         token.teacherid=user.teacherid;
         token.hodid = user.hodid;
         token.isdivisonmentor=user.isdivisonmentor;
+        token.isaccepted=user.isaccepted;
       }
    return token;
     },
@@ -82,6 +83,7 @@ export const authOptions: NextAuthOptions = {
           (session.user.teacherid = token.teacherid);
           (session.user.hodid = token.hodid);
           (session.user.isdivisonmentor = token.isdivisonmentor); 
+          (session.user.isaccepted=token.isaccepted);
       }
       return session;
     },

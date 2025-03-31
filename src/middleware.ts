@@ -14,6 +14,7 @@ export const config = {
     "/api/:path*",
     "/hod-dash/:path*",
     "/division-dashboard/:path*",
+    "/pending/:path*"
   ],
 };
 
@@ -79,7 +80,6 @@ export async function middleware(request: NextRequest) {
       if (!token) {
         return NextResponse.redirect(new URL("/sign-in", request.url));
       }
-
       return NextResponse.redirect(
         new URL("student-complete-profile", request.url)
       );
@@ -94,6 +94,10 @@ export async function middleware(request: NextRequest) {
     if (token?.usertype === "TEACHER" && token?.formfilled) {
       return NextResponse.redirect(new URL("/teacher-dashboard", request.url));
     } else if (token?.usertype === "STUDENT" && token?.formfilled) {
+      if(!token.isaccepted)
+      {
+        return NextResponse.redirect(new URL("/pending",request.url));
+      }
       return NextResponse.redirect(new URL("/student-dashboard", request.url));
     } else if (token?.usertype === "HOD" && token?.formfilled) {
       return NextResponse.redirect(new URL("/hod-dash", request.url));

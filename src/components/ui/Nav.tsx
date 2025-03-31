@@ -26,10 +26,10 @@ import { Button } from "./button";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/hooks/hooks";
 const Nav = () => {
-  const dispatch=useAppDispatch();
-  const {unreadCount}=useAppSelector((state)=>state.notification);
+  const dispatch = useAppDispatch();
+  const { unreadCount } = useAppSelector((state) => state.notification);
   const { teacherid } = useAppSelector((state) => state.user);
-  
+
   const router = useRouter();
   const [div, setDiv] = useState<
     { division_code: string; division_id: string }[]
@@ -37,12 +37,12 @@ const Nav = () => {
   const [ismentor, setIsMentor] = useState(false);
   console.log(teacherid);
   let [profile, setProfile] = useState(
-    "https://res.cloudinary.com/durtlcmnb/image/upload/v1735891361/Healthcare_user_profile/ofvdziaspjfupznrdcdr.png"
+    "https://res.cloudinary.com/durtlcmnb/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1732848886/Healthcare_user_profile/nlrodw6knfvctcjicpuo.jpg"
   );
   let [username, setUsername] = useState("");
   let [email, setEmail] = useState("");
   let [type, setType] = useState("");
-  
+
   useEffect(() => {
     async function fetchData() {
       const session = await getSession();
@@ -76,8 +76,7 @@ const Nav = () => {
 
       {type == "TEACHER" ? (
         <div className="md:basis-1/4 flex flex-row-reverse items-center space-y-2 md:space-y-0 md:space-x-2 m-2 gap-3">
-
-<Button
+          <Button
             variant="ghost"
             size="icon"
             className="relative"
@@ -90,7 +89,7 @@ const Nav = () => {
               </span>
             )}
           </Button>
-         
+
           {ismentor ? (
             <Button
               onClick={() => router.replace("/teacher-dashboard/divisions")}
@@ -100,7 +99,6 @@ const Nav = () => {
           ) : (
             <></>
           )}
-          
         </div>
       ) : (
         <></>

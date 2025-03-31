@@ -1,32 +1,54 @@
 import { Teacher } from "@/model/Teacher";
-
+import { Department } from "@/model/Hod";
 import dbConnection from "@/lib/dbConnection";
+import { Hod } from "@/model/Hod";
+import mongoose from "mongoose";
+import { division } from "@/types/ApiResponse";
+import { Division } from "@/model/Division";
 
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const hodid = searchParams.get("hodid");
+  const Divisionid = searchParams.get("divisionid");
+  let id;
   await dbConnection();
   try {
-    const Teachers = await Teacher.aggregate([
+    if (hodid) {
+      const hod = await Hod.findById(hodid);
+      id = hod.department;
+    } else {
+      const div = await Division.findById(Divisionid);
+      id = div?.department;
+    }
+
+    const result = await Department.aggregate([
       {
-        $project: {
-          teacher: {
-            _id: "$_id",
-            name: "$name",
-          },
+        $match: { _id: new mongoose.Types.ObjectId(id) }, // Match the given department ID
+      },
+      {
+        $lookup: {
+          from: "teachers", // Collection name for teachers
+          localField: "teachers", // Assuming "teachers" field stores teacher IDs
+          foreignField: "_id",
+          as: "teacherDetails",
         },
       },
       {
-        $group: {
-          _id: null,
-          teachers: {
-            $push: "$teacher",
-          },
+        $unwind: "$teacherDetails", // Convert array into separate documents
+      },
+      {
+        $project: {
+          _id: "$teacherDetails._id",
+          name: "$teacherDetails.name",
         },
       },
     ]);
 
+    console.log(result);
+
     return Response.json({
       success: true,
-      data: Teachers[0].teachers,
+      data: result,
     });
   } catch (err) {
     console.error("Error in fetching teacher", err);

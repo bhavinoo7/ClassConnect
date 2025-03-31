@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { getSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
+import { useAppSelector } from "@/hooks/hooks";
 
 // ✅ Define Zod schema for validation
 const FormSchema = z.object({
@@ -39,6 +40,8 @@ export default function Page() { // 🔹 Renamed from "page" to "Page"
   const [submitting, setSubmitting] = useState(false);
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [session, setSession] = useState<SessionUser | null>(null);
+  const {hodid}=useAppSelector(state=>state.user);
+  
 
   // ✅ Fetch session data
   useEffect(() => {
@@ -59,7 +62,7 @@ export default function Page() { // 🔹 Renamed from "page" to "Page"
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const response = await axios.get("/api/fetch-teacher");
+        const response = await axios.get("/api/fetch-teacher?hodid="+hodid);
         const data = response.data.data.map((teacher: { name: string; _id: string }) => ({
           label: teacher.name,
           value: teacher._id,

@@ -14,6 +14,7 @@ export interface Teacher extends Document {
     ismentor: boolean;
     password: string;
   };
+  department:Array<mongoose.Schema.Types.ObjectId>;
   lectures: Array<mongoose.Schema.Types.ObjectId>;
   sessions: Array<mongoose.Schema.Types.ObjectId>;
   currentent_session: mongoose.Schema.Types.ObjectId;
@@ -37,6 +38,9 @@ export interface session extends Document {
 
 const TeacherSchema: Schema<Teacher> = new Schema({
   name: { type: String, required: [true, "Name is required"] },
+  department:[
+    { type: mongoose.Schema.Types.ObjectId, ref: "Department", default: null }
+  ],
   email: { type: String, required: [true, "email is required"], unique: true },
   contact_no: { type: Number, required: [true, "contact no is required"], unique: true },
   address: { type: String, required: [true, "address is required"] },
