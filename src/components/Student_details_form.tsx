@@ -54,13 +54,13 @@ const Student_details_form = () => {
     }
     fetchData();
   }, []);
-  console.log(session);
+  
 
   useEffect(() => {
     async function fetchDepartment()
     {
     const response=await axios.get("/api/fetch-department");
-    console.log(response.data.data);
+    
     setDepartments(response.data.data);
     }
     fetchDepartment()
@@ -89,7 +89,7 @@ const Student_details_form = () => {
       url: imageUrl,
       id: session,
     };
-    console.log(data);
+   
     try {
       const response = await axios.post(
         "api/student-detail-form",
@@ -208,13 +208,13 @@ const Student_details_form = () => {
           setissubmitting(false); // Set the image URL
         }
       });
-    console.log(files);
+    
   };
 
   const handlebrachange = async(e: string) => {
-    console.log(e);
+    
     const response=await axios.post("/api/f-fetch-division",{department_id:e});
-    console.log(response.data.data);
+    
     setDivision(response.data.data);
   };
 

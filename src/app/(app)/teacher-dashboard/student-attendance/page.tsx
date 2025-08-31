@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Book, ChevronRight, GraduationCap } from "lucide-react";
+import { Book, ChevronRight, GraduationCap, Loader2 } from "lucide-react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -88,13 +88,12 @@ export default function Page() {
   }, [data, error]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p>Loading...</p>
-        <Progress value={33} />
-      </div>
-    );
-  }
+      return (
+        <div className="flex flex-col items-center justify-center h-screen">
+          <Loader2 className="mr-2 h-11 w-11 animate-spin" />
+        </div>
+      );
+    }
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-6">

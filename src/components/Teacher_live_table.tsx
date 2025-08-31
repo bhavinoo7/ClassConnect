@@ -12,9 +12,6 @@ import { v4 as uuidv4 } from "uuid";
 
 const Teacher_live_table = ({ attendance }: any) => {
   const [liveattendance, setliveattendance] = useState<any[]>([]);
-  console.log(attendance);
-  console.log("BB", liveattendance);
-  const [track, settrack] = useState(false);
   useEffect(() => {
     setliveattendance(attendance);
   }, [attendance]);

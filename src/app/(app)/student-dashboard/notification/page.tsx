@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Filter, Search } from "lucide-react"
+import { Bell, Filter, Loader2, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
@@ -31,6 +31,7 @@ interface Notification {
 
 export default function Page() {
   const dispatch=useAppDispatch();
+  const [isLoading,setIsLoading]=useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([
    
   ])
@@ -38,6 +39,7 @@ export default function Page() {
 
   useEffect(() => {
     if (studentid) {
+      setIsLoading(true);
       async function fetchnotification() {
         const res = await axios.get(`/api/noti-fetch?student_id=${studentid}`);
         
@@ -48,6 +50,7 @@ export default function Page() {
           );
           dispatch(NotificationActions.setUnread(res.data.data.unread));
         }
+        setIsLoading(false);
       }
       fetchnotification();
     }
@@ -173,6 +176,14 @@ export default function Page() {
 
   const filteredTeacherNotifications = filterNotifications(teacherNotifications)
   const filteredHodNotifications = filterNotifications(hodNotifications)
+
+  if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen">
+          <Loader2 className="mr-2 h-11 w-11 animate-spin" />
+        </div>
+      );
+    }
 
   return (
     <div className="container mx-auto py-8 px-4">

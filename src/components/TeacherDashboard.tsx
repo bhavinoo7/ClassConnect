@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Progress } from "./ui/progress";
 import { StudentAttendance } from "./StudentAttendance";
 import TeacherTable from "./TeacherTable";
+import { Loader2 } from "lucide-react";
 
 
 function convertToDate(timeString: string): Date {
@@ -157,8 +158,7 @@ const TeacherDashboard = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
-        <p>Loading...</p>
-        <Progress value={50} />
+        <Loader2 className="mr-2 h-11 w-11 animate-spin" />
       </div>
     );
   }

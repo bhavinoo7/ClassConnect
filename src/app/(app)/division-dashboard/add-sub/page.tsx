@@ -69,7 +69,7 @@ export default function Page() {
       return;
     }
 
-    console.log("Bhavin");
+  
 
     const response = await axios.post("/api/add-subject", {
       name: subjectName,

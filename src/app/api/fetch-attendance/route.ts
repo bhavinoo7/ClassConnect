@@ -2,6 +2,7 @@ import dbConnection from "@/lib/dbConnection";
 import { session } from "@/model/Teacher";
 import { Attendance } from "@/model/Timetable";
 import Student from "@/model/Student";
+import { ja } from "date-fns/locale";
 
 export interface atendance {
   student_id: string;
@@ -17,6 +18,8 @@ export async function POST(req: Request) {
 
   try {
     const { session_id, recognize } = await req.json();
+    console.log(recognize);
+    console.log(session_id);  
 
     const sessi = await session.findById(session_id);
     if (!sessi) {
@@ -39,8 +42,11 @@ export async function POST(req: Request) {
           path: "student_id",
           model: Student,
         });
+        console.log(attendanc);
 
         if (!attendanc) return;
+
+        console.log(rs.includes((attendanc.student_id as any)._id.toString()));
 
         if (rs.includes((attendanc.student_id as any)._id.toString())) {
           if (attendanc.status === "Not marked") {

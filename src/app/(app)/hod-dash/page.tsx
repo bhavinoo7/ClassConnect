@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function Page() {
   const { toast } = useToast();
@@ -52,10 +53,10 @@ export default function Page() {
     
   };
 
-  if (isLoading) {
+ if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
+      <div className="flex flex-col items-center justify-center h-screen">
+        <Loader2 className="mr-2 h-11 w-11 animate-spin" />
       </div>
     );
   }

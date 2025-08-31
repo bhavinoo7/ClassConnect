@@ -36,7 +36,7 @@ const chartConfig = {
 export function WeekChart({divisions}:any) {
   const date = new Date("2025-01-19T17:25:48.285+00:00");
 const dayName = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(date);
-console.log(dayName);
+
   return (
     <Card>
       <CardHeader>

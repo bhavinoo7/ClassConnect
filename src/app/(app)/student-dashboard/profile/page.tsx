@@ -10,6 +10,7 @@ import { useAppSelector } from "@/hooks/hooks";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Progress } from "@/components/ui/progress";
+import { Loader2 } from "lucide-react";
 
 // Mock student data - in a real app, this would come from an API or database
 
@@ -23,7 +24,7 @@ export default function Page() {
     },
   });
   const { studentid } = useAppSelector((state) => state.user);
-  console.log(studentid);
+  
 
   interface StudentData {
     name: string;
@@ -43,13 +44,12 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("personal");
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <p>Loading...</p>
-        <Progress value={50} />
-      </div>
-    );
-  }
+      return (
+        <div className="flex flex-col items-center justify-center h-screen">
+          <Loader2 className="mr-2 h-11 w-11 animate-spin" />
+        </div>
+      );
+    }
 
   return (
     <Card className="max-w-4xl mx-auto my-8">

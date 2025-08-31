@@ -1,5 +1,6 @@
 import dbConnection from "@/lib/dbConnection";
-import { Teacher } from "@/model/Teacher";
+import { session, Teacher } from "@/model/Teacher";
+import { Session } from "inspector/promises";
 export async function GET(req: Request) {
   await dbConnection();
   try {
@@ -9,6 +10,19 @@ export async function GET(req: Request) {
     const teacher = await Teacher.findById(teacher_id);
 
     if (teacher.currentent_session !== null) {
+      const sessio = await session.findById(teacher.currentent_session);
+      if(sessio && sessio.status==="open" && new Date(sessio.end_time)>new Date()){
+        {
+          sessio.status="closed";
+          await sessio.save();
+          teacher.currentent_session=null;
+          await teacher.save();
+        }
+        return Response.json({
+        success: false,
+        message: "session not found",
+      });
+      }
       return Response.json({
         success: true,
         data: teacher.currentent_session,

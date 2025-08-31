@@ -84,7 +84,7 @@ export default function Page() {
   const attendancePercentage = Math.round(
     (presentClasses / totalClasses) * 100
   );
-  console.log(attendanceData);
+
   type SortConfig = {
     key: keyof (typeof attendanceData)[0];
     direction: "asc" | "desc";

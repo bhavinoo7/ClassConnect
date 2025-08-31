@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Clock,
   GraduationCap,
+  Loader2,
   UserCheck,
 } from "lucide-react";
 import {
@@ -266,7 +267,7 @@ export default function Page() {
   
 
   const [sub, setsub] = useState<string>("");
-
+  const [isLoading,setIsLoading]=useState(false);
   const [timeframe, setTimeframe] = useState("week");
   const [selectedSubject, setSelectedSubject] = useState<string>("1");
   const { studentid } = useAppSelector((state) => state.user);
@@ -279,6 +280,7 @@ export default function Page() {
   useEffect(() => {
     if (!selectedSemester) return;
     async function fetchreport() {
+      
       const semesterObj = sem.find(
         (s: any) => s.Semester_name === selectedSemester
       );
@@ -311,6 +313,7 @@ export default function Page() {
       setTotalAttendance(response.data.data[0].present_sessions);
       setTotalSessions(response.data.data[0].total_sessions);
       setTotalPercentage(response.data.data[0].percentage);
+      setIsLoading(false);
     }
     fetchreport();
   }, [selectedSemester]);
@@ -324,6 +327,7 @@ export default function Page() {
  
   useEffect(() => {
     async function fetchsemster() {
+      setIsLoading(true);
       const response = await axios.get(
         "/api/fetch-semester?studentid=" + studentid
       );
@@ -449,6 +453,13 @@ export default function Page() {
       </ChartContainer>
     );
   };
+  if (isLoading) {
+        return (
+          <div className="flex flex-col items-center justify-center h-screen">
+            <Loader2 className="mr-2 h-11 w-11 animate-spin" />
+          </div>
+        );
+      }
 
   return (
     <div className="flex min-h-screen flex-col gap-4 p-4 md:gap-8 md:p-10">

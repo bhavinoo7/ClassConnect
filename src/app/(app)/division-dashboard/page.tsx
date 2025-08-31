@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { BookOpen, Calendar, ClipboardList, Eye, FileDown, GraduationCap, Search, Users } from "lucide-react"
+import { BookOpen, Calendar, ClipboardList, Eye, FileDown, GraduationCap, Loader2, Search, Users } from "lucide-react"
 import { v4 as uuidv4 } from "uuid"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,7 @@ import autoTable from "jspdf-autotable"
 
 export default function Page() {
   const dispatch = useAppDispatch()
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter()
   const [selectedSemester, setSelectedSemester] = useState("")
   const [semesters, setSemesters] = useState<{ id: string; name: string; current: boolean }[]>([])
@@ -115,7 +116,9 @@ export default function Page() {
 
   useEffect(() => {
     async function fetchData() {
+      setIsLoading(true);
       const response = await axios.get(`/api/fetch-division-data?division_id=${sessionData}`)
+      
 
       const sem = response.data.data.map((se: any) => {
         return {
@@ -181,6 +184,7 @@ export default function Page() {
       }
       setSemesterData(Object.assign({}, ...semData.map((s: any) => ({ [s.id]: s }))))
       setSemesters(sem)
+      setIsLoading(false);
     }
     if (sessionData) {
       fetchData()
@@ -305,6 +309,13 @@ export default function Page() {
       ])
     }
   }
+  if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen">
+          <Loader2 className="mr-2 h-11 w-11 animate-spin" />
+        </div>
+      );
+    }
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">

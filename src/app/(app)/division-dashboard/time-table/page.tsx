@@ -10,6 +10,7 @@ import {
   Calendar,
   Edit,
   BookOpen,
+  Loader2,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
 import { timeTableActions } from "@/store/slice/timetable";
@@ -974,13 +975,12 @@ export default function Page() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
-        <p>Loading...</p>
-        <Progress value={50} />
+        <Loader2 className="mr-2 h-11 w-11 animate-spin" />
       </div>
     );
   }
 
-  console.log("Bhavin", currentEntry);
+ 
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-6">

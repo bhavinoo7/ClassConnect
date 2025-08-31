@@ -17,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 export function StudentAttendance({ session_id }: any) {
   const {teacherid}=useAppSelector((state)=>state.user);
   const {toast}=useToast();
-  console.log(session_id);
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
@@ -115,27 +114,31 @@ export function StudentAttendance({ session_id }: any) {
       if (data.secure_url) {
         setCloudinaryUrl(data.secure_url);
   
-        setSubmitting(false);
+        // setSubmitting(false);
         const response = await axios.post(`${process.env.NEXT_PUBLIC_PY_NGROK}/recognize`, {
           video_url: data.secure_url,
         });
-        console.log(response);
-        console.log("NDJJDJDDDDDDDDDDDDDDDDDDDDJ");
+     
         
        
         if (response.data.message === "Face recognition completed") {
           toast({
             title: "Success",
-            description: "Face recognition completed",
+            description: "Face recognition completed now marking attendance",
           });
           setRecognize(response.data.recognized_students);
-          console.log(response.data.recognized_students);
+        
           const respons=await axios.post("/api/fetch-attendance",{session_id,recognize:response.data.recognized_students});
-      console.log(respons.data.data);  
+      
       setStudentAttendance(respons.data.data);
           console.log(recognize);
+          toast({
+            title: "Success",
+            description: "Marking Attendance Completed",
+          });
         }
-        console.log("Uploaded Video URL:", data.secure_url);
+        
+        setSubmitting(false);
       }
     } catch (error) {
       console.error("Error uploading video:", error);
@@ -145,12 +148,12 @@ export function StudentAttendance({ session_id }: any) {
 
   const submitAttendance = async () => {
     if (!cloudinaryUrl) return;
-    console.log("Submitting attendance with video URL:", cloudinaryUrl);
+    
     setSubmitting(true);
     const response=await axios.post("/api/close-session",{teacher_id:teacherid});
-    console.log(response);  
+    
     if (response.data.success) {
-      console.log("success");
+      
       toast({
         title: "Success",
         description: "Session closed successfully",
