@@ -60,7 +60,23 @@ const Page = () => {
     }
     if (result?.url) {
       localStorage?.setItem("status", "login");
-      router.replace("/");
+      // router.replace("/");
+      
+    }
+    if (!result?.error) {
+      localStorage?.setItem("status", "login");
+      // get user session
+      const session = await fetch("/api/auth/session").then((r) => r.json());
+
+      if (session?.user?.usertype === "STUDENT") {
+        router.replace("/student-dashboard");
+      } else if (session?.user?.usertype === "TEACHER") {
+        router.replace("/teacher-dashboard");
+      } else if (session?.user?.usertype === "HOD") {
+        router.replace("/hod-dash");
+      } else {
+        router.replace("/");
+      }
     }
   };
   return (
